@@ -1,0 +1,26 @@
+# Segredos: nunca enviar ao GitHub
+.env
+.env.*
+!.env.example
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Bancos de dados locais
+*.db
+*.sqlite
+*.sqlite3
+
+# Frontend (Etapa 4)
+node_modules/
+dist/
+
+# Configurações locais de ferramentas
+.idea/
+.vscode/
+.claude/launch.json
+.claude/settings.local.json

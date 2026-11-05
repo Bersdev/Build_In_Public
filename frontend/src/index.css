@@ -1,0 +1,112 @@
+@import "@fontsource-variable/instrument-sans";
+@import "@fontsource-variable/newsreader";
+@import "tailwindcss";
+
+/* Azul-tinta com âmbar de luz de estudo. Dark é o padrão. */
+:root,
+[data-theme="dark"] {
+  color-scheme: dark;
+  --canvas: #131822;
+  --surface: #1a202b;
+  --raised: #232a37;
+  --line: #2d3543;
+  --ink: #e8eaef;
+  --muted: #a2abbc;
+  --faint: #8590a3;
+  --accent: #e8b04a;
+  --accent-ink: #e8b04a;
+  --on-accent: #261a05;
+  --chart: #be8429;
+  --ok: #5cc0a2;
+  --danger: #ef7d74;
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+  --canvas: #f4f5f8;
+  --surface: #ffffff;
+  --raised: #e9ecf1;
+  --line: #d6dae2;
+  --ink: #1a2030;
+  --muted: #4f596b;
+  --faint: #636d80;
+  --accent: #dd9c33;
+  --accent-ink: #855600;
+  --on-accent: #261a05;
+  --chart: #b97a14;
+  --ok: #0f7a5c;
+  --danger: #bf352a;
+}
+
+@theme inline {
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-raised: var(--raised);
+  --color-line: var(--line);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-on-accent: var(--on-accent);
+  --color-chart: var(--chart);
+  --color-ok: var(--ok);
+  --color-danger: var(--danger);
+  --font-sans: "Instrument Sans Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Newsreader Variable", ui-serif, Georgia, serif;
+}
+
+body {
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent-ink);
+  outline-offset: 2px;
+}
+
+@layer components {
+  .control {
+    width: 100%;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--canvas);
+    padding: 0.45rem 0.65rem;
+    color: var(--ink);
+  }
+  .control:focus-visible {
+    outline-offset: 0;
+  }
+  .control::placeholder {
+    color: var(--faint);
+  }
+  .prose-note {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    font-family: var(--font-serif);
+    font-size: 1.0625rem;
+    line-height: 1.6;
+  }
+}
+
+dialog {
+  margin: auto;
+  color: var(--ink);
+}
+dialog::backdrop {
+  background: rgb(5 8 14 / 0.65);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
