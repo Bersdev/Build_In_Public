@@ -43,3 +43,4 @@ Baseado no conteúdo programático do nanocurso Python Development da FIAP, info
 | Conceito | Onde foi aplicado | Arquivos | Exercício | Dificuldades | Revisar |
 |---|---|---|---|---|---|
 | Diagnóstico de fundamentos | Regras simplificadas do produto | `exercicios/diagnostico.py` | Pendente | A avaliar | A avaliar |
+| Atividade 1: funções, dicionários, tuplas, JSON, `datetime` e primeiros testes com `pytest` | Sessões de estudo e gamificação, em versão de terminal | `exercicios/atividade_01/` | Entregue, aguardando o estudante | A avaliar | A avaliar |

@@ -33,7 +33,7 @@ Cada passo segue o mesmo ciclo: Claude explica o conceito e o código de referê
 
 | Passo | Módulo | Conceitos novos | Telas |
 |---|---|---|---|
-| Antes de começar | Aulas e exercícios | HTTP e APIs, type hints, exceções, classes, decorators, `pytest` | Nenhuma |
+| Antes de começar | Aulas e exercícios (Atividade 1 em `exercicios/atividade_01/`) | HTTP e APIs, type hints, exceções, classes, decorators, `pytest` | Nenhuma |
 | 1 | Base: configuração, banco, erros, schemas | SQL, SQLAlchemy, Pydantic, Alembic, `yield` | Nenhuma |
 | 2 | Autenticação e perfil | Hash de senha, sessões, cookies, autorização | Login, Cadastro, Recuperação de senha, Perfil, Configurações |
 | 3 | Sessões de estudo e catálogo | CRUD, relacionamentos, filtros | Estudos (sessões) |

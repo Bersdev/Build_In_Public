@@ -10,6 +10,9 @@ __pycache__/
 *.pyc
 .pytest_cache/
 
+# Dados gerados pelas atividades
+exercicios/**/sessoes.json
+
 # Bancos de dados locais
 *.db
 *.sqlite
