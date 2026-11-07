@@ -53,12 +53,15 @@ def minutos_por_tecnologia(sessoes):
     grafias = {}
     
     for sessao in sessoes:
-        tecnologia = sessao['tecnologia']
+        nome = sessao['tecnologia']
         minutos = sessao['minutos']
-        tecnologia = tecnologia.lower()
-        if tecnologia not in grafias:
-    
-    
+        chave = nome.lower()
+        
+        if chave not in grafias:
+            grafias[chave] = nome
+            
+        tecnologia = grafias[chave]
+            
         if tecnologia in total:
             total[tecnologia] += minutos
         else:
@@ -78,8 +81,10 @@ def xp_da_sessao(minutos):
 
 def nivel_do_xp(xp):
     """Parte 4. Devolve o nível correspondente ao XP total."""
-    return max(1, (xp // 100) + 1)
-
+    nivel = 1
+    while xp >=  :      # XP necessário para o PRÓXIMO nível
+                      # sobe um nível
+    return nivel
 
 def sequencia_atual(sessoes, hoje):
     """Parte 5. Dias seguidos de estudo, terminando hoje ou ontem."""
