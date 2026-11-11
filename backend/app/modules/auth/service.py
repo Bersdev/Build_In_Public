@@ -124,8 +124,11 @@ def reset_password(db: Session, token: str, new_password: str) -> None:
     db.commit()
 
 
-def change_password(db: Session, user: User, current: str, new: str) -> None:
+def change_password(db: Session, user: User, current: str, new: str, current_token: str | None) -> None:
     if not verify_password(user.password_hash, current):
         raise ValidationFailed("A senha atual está incorreta.")
     user.password_hash = hash_password(new)
+    # Encerra as sessões dos outros aparelhos: se alguém roubou uma sessão, ela deixa de valer.
+    keep = _hash_token(current_token) if current_token else ""
+    db.execute(delete(UserSession).where(UserSession.user_id == user.id, UserSession.token_hash != keep))
     db.commit()

@@ -34,11 +34,13 @@ Ao gravar variáveis pelo PowerShell, use o Bash ou o painel: o PowerShell 5.1 c
 
 ## Publicar de novo
 
+O projeto está ligado ao repositório `Bersdev/Build_In_Public`. Cada push na `main` publica em produção; push em outra branch gera uma versão de prévia com endereço próprio.
+
+Para publicar sem passar pelo GitHub:
+
 ```bash
 vercel deploy --prod
 ```
-
-O projeto ainda não está ligado a um repositório no GitHub. Depois de publicar o repositório, conecte-o em **Project → Settings → Git** para publicar a cada push.
 
 ## Limitações conhecidas
 

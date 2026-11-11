@@ -148,3 +148,15 @@ def test_trocar_senha_exige_a_senha_atual(client):
     assert client.post(f"{AUTH}/change-password", json=errada).status_code == 422
     assert client.post(f"{AUTH}/change-password", json=certa).status_code == 204
     assert client.get(f"{AUTH}/me").status_code == 200
+
+
+def test_trocar_senha_encerra_as_outras_sessoes(client, new_client):
+    outro_aparelho = new_client()
+    login = {"email": "ana@exemplo.com", "password": PASSWORD}
+    assert outro_aparelho.post(f"{AUTH}/login", json=login).status_code == 200
+
+    corpo = {"current_password": PASSWORD, "new_password": "nova-senha-456789"}
+    assert client.post(f"{AUTH}/change-password", json=corpo).status_code == 204
+
+    assert client.get(f"{AUTH}/me").status_code == 200
+    assert outro_aparelho.get(f"{AUTH}/me").status_code == 401

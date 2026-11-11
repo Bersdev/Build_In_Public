@@ -65,5 +65,6 @@ def reset_password(data: schemas.ResetPasswordRequest, db: Db):
 
 
 @router.post("/change-password", status_code=status.HTTP_204_NO_CONTENT)
-def change_password(data: schemas.ChangePasswordRequest, db: Db, user: CurrentUser):
-    service.change_password(db, user, data.current_password, data.new_password)
+def change_password(data: schemas.ChangePasswordRequest, request: Request, db: Db, user: CurrentUser):
+    token = request.cookies.get(get_settings().cookie_name)
+    service.change_password(db, user, data.current_password, data.new_password, token)
