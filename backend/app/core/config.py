@@ -23,6 +23,10 @@ class Settings(BaseSettings):
     session_days: int = 14
     password_reset_minutes: int = 60
     frontend_url: str = "http://localhost:5173"
+    # IA da Groq para analisar roadmaps importados. Sem chave, a análise fica desligada.
+    groq_api_key: str = ""
+    groq_model: str = "openai/gpt-oss-120b"
+    groq_base_url: str = "https://api.groq.com/openai/v1"
 
     @property
     def resolved_database_url(self) -> str:

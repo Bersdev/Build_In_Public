@@ -1,5 +1,7 @@
 /** Limite igual ao da API (300 mil caracteres), checado antes de enviar. */
 export const MAX_CSV_BYTES = 300_000;
+/** Na análise com IA o limite é menor (60 mil caracteres), para caber no modelo e no tempo da função. */
+export const MAX_AI_CSV_BYTES = 60_000;
 
 export const ROADMAP_TEMPLATE = `etapa,item,link,notas
 Fundamentos,Variáveis e tipos,https://docs.python.org/pt-br/3/tutorial/introduction.html,

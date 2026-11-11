@@ -7,6 +7,7 @@ from app.modules.auth.router import router as auth_router
 from app.modules.catalog.router import router as catalog_router
 from app.modules.gamification.router import router as gamification_router
 from app.modules.goals.router import router as goals_router
+from app.modules.imports.router import router as imports_router
 from app.modules.journal.router import router as journal_router
 from app.modules.learning.router import router as learning_router
 from app.modules.projects.router import router as projects_router
@@ -30,6 +31,7 @@ for module_router in (
     goals_router,
     gamification_router,
     analytics_router,
+    imports_router,
 ):
     api.include_router(module_router)
 app.include_router(api)

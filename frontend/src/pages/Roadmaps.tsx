@@ -1,11 +1,12 @@
-import { useQuery } from "@tanstack/react-query";
-import { Download, Upload } from "lucide-react";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { Download, Sparkles, Upload } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { Badge, Button, DeleteButton, Empty, ErrorNote, Loaded, Modal, PageHeader, Progress, SelectField, TextArea, TextField, useAction } from "../components/ui";
 import { api } from "../lib/api";
-import { MAX_CSV_BYTES, decodeCsv, downloadTemplate, titleFromFileName } from "../lib/csv";
+import { MAX_AI_CSV_BYTES, MAX_CSV_BYTES, decodeCsv, downloadTemplate, titleFromFileName } from "../lib/csv";
 import { formValues, formatDate } from "../lib/format";
-import type { Course, LearningItem, LearningPath, LearningPathDetail, LearningStage } from "../lib/types";
+import type { Course, ImportPlan, ImportResult, LearningItem, LearningPath, LearningPathDetail, LearningStage } from "../lib/types";
+import { ImportPlanReview, ImportSummary } from "./ImportPlanReview";
 
 function PathForm({ path, onDone }: { path?: LearningPath; onDone: () => void }) {
   const save = useAction(
@@ -35,31 +36,53 @@ function PathForm({ path, onDone }: { path?: LearningPath; onDone: () => void })
   );
 }
 
-function ImportForm({ onDone }: { onDone: (pathId: number) => void }) {
+function ImportForm({ onDone }: { onDone: (pathId: number | null) => void }) {
   const [file, setFile] = useState<File | null>(null);
   const [title, setTitle] = useState("");
   const [fileError, setFileError] = useState<string | null>(null);
+  const aiStatus = useQuery({ queryKey: ["ai-status"], queryFn: () => api.get<{ enabled: boolean }>("/imports/ai-status") });
+  const aiEnabled = aiStatus.data?.enabled === true;
+  const [useAi, setUseAi] = useState(true);
+  const withAi = aiEnabled && useAi;
+  const [analysis, setAnalysis] = useState<{ plan: ImportPlan; warnings: string[] } | null>(null);
+  const [result, setResult] = useState<ImportResult | null>(null);
+
   const importPath = useAction((body: { title: string; technology: string | null; content: string }) =>
     api.post<LearningPathDetail>("/learning-paths/import", body),
   );
+  const analyze = useMutation({
+    mutationFn: (content: string) => api.post<{ plan: ImportPlan; warnings: string[] }>("/imports/analyze", { content }),
+    onSuccess: setAnalysis,
+  });
 
   function pick(selected: File | null) {
     setFile(selected);
-    setFileError(selected && selected.size > MAX_CSV_BYTES ? "O arquivo pode ter até 300 KB." : null);
+    const limit = withAi ? MAX_AI_CSV_BYTES : MAX_CSV_BYTES;
+    setFileError(selected && selected.size > limit ? `O arquivo pode ter até ${limit / 1000} KB${withAi ? " na análise com IA" : ""}.` : null);
     if (selected && !title) setTitle(titleFromFileName(selected.name));
   }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!file || fileError) return;
-    const technology = String(new FormData(event.currentTarget).get("technology") ?? "").trim();
     const content = decodeCsv(await file.arrayBuffer());
+    if (withAi) {
+      analyze.mutate(content);
+      return;
+    }
+    const technology = String(new FormData(event.currentTarget).get("technology") ?? "").trim();
     importPath.mutate(
       { title: title.trim(), technology: technology || null, content },
       { onSuccess: (path) => onDone((path as LearningPathDetail).id) },
     );
   }
 
+  if (result) return <ImportSummary result={result} onOpenPath={onDone} onClose={() => onDone(null)} />;
+  if (analysis) {
+    return <ImportPlanReview plan={analysis.plan} warnings={analysis.warnings} onBack={() => setAnalysis(null)} onApplied={setResult} />;
+  }
+
+  const pending = importPath.isPending || analyze.isPending;
   return (
     <form className="space-y-4" onSubmit={submit}>
       <div className="rounded-lg border border-line bg-canvas p-4 text-sm text-muted">
@@ -91,12 +114,43 @@ function ImportForm({ onDone }: { onDone: (pathId: number) => void }) {
           {fileError}
         </p>
       )}
-      <TextField label="Nome da trilha" name="title" value={title} onChange={(event) => setTitle(event.target.value)} required />
-      <TextField label="Tecnologia" name="technology" placeholder="Opcional" />
-      <ErrorNote error={importPath.error} />
-      <Button type="submit" variant="primary" disabled={!file || Boolean(fileError) || importPath.isPending}>
-        <Upload size={15} /> {importPath.isPending ? "Importando..." : "Importar roadmap"}
+
+      <div className={`rounded-lg border p-3 ${withAi ? "border-accent/40 bg-accent/5" : "border-line"}`}>
+        <label className={`flex items-start gap-2.5 ${aiEnabled ? "cursor-pointer" : "opacity-60"}`}>
+          <input
+            type="checkbox"
+            className="mt-1 size-4 accent-[var(--accent)]"
+            checked={withAi}
+            disabled={!aiEnabled}
+            onChange={(event) => setUseAi(event.target.checked)}
+          />
+          <span>
+            <span className="flex items-center gap-1.5 text-sm text-ink">
+              <Sparkles size={14} className="text-accent-ink" /> Usar IA para encontrar metas, projetos e tarefas
+            </span>
+            <span className="mt-0.5 block text-[12px] text-faint">
+              {aiStatus.isPending
+                ? "Verificando se a IA está disponível..."
+                : aiEnabled
+                  ? "O conteúdo do arquivo é enviado à Groq para análise. Você revisa tudo antes de salvar."
+                  : "A IA não está configurada no servidor (falta GROQ_API_KEY). A importação simples continua funcionando."}
+            </span>
+          </span>
+        </label>
+      </div>
+
+      {!withAi && (
+        <>
+          <TextField label="Nome da trilha" name="title" value={title} onChange={(event) => setTitle(event.target.value)} required />
+          <TextField label="Tecnologia" name="technology" placeholder="Opcional" />
+        </>
+      )}
+      <ErrorNote error={importPath.error ?? analyze.error} />
+      <Button type="submit" variant="primary" disabled={!file || Boolean(fileError) || pending}>
+        {withAi ? <Sparkles size={15} /> : <Upload size={15} />}
+        {analyze.isPending ? "Analisando com IA..." : importPath.isPending ? "Importando..." : withAi ? "Analisar arquivo" : "Importar roadmap"}
       </Button>
+      {analyze.isPending && <p className="text-[12px] text-faint">Pode levar até um minuto em arquivos grandes.</p>}
     </form>
   );
 }

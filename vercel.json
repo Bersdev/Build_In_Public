@@ -8,7 +8,7 @@
   "functions": {
     "api/index.py": {
       "includeFiles": "backend/{app,alembic}/**",
-      "maxDuration": 30
+      "maxDuration": 60
     }
   },
   "rewrites": [

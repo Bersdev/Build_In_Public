@@ -1,5 +1,13 @@
 # Alterações
 
+## 2026-11-11 (noite)
+
+### Adicionado
+
+- Importação com IA (Groq): ao importar um CSV em Roadmaps, a IA separa conteúdos de estudo (trilha), metas, projetos e tarefas. A pessoa revisa, desmarca o que não quiser e confirma; cada item vai para a sua página. Rotas `GET /api/v1/imports/ai-status`, `POST /api/v1/imports/analyze` e `POST /api/v1/imports/apply`.
+- Cliente da Groq em `backend/app/core/groq.py`, só com a biblioteca padrão, usando saída JSON estrita.
+- Variáveis `GROQ_API_KEY` e `GROQ_MODEL`.
+
 ## 2026-11-11 (tarde)
 
 ### Adicionado

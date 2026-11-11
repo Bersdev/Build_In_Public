@@ -11,7 +11,7 @@ from app.modules.catalog.service import get_or_create, get_owned
 from app.modules.gamification import rules
 from app.modules.gamification.service import evaluate_achievements, revoke_xp, sync_xp
 from app.modules.learning import schemas
-from app.modules.learning.csv_import import parse_roadmap_csv
+from app.modules.learning.csv_import import ParsedStage, parse_roadmap_csv
 from app.modules.learning.models import Course, LearningPath, LearningPathItem, LearningPathStage
 
 
@@ -77,10 +77,25 @@ def create_path(db: Session, user: User, data: schemas.PathCreate) -> LearningPa
 
 def import_path(db: Session, user: User, data: schemas.PathImport) -> LearningPath:
     """Cria a trilha inteira de uma vez: ou tudo é salvo, ou nada (um único commit)."""
-    stages = parse_roadmap_csv(data.content)
-    path = LearningPath(user_id=user.id, title=data.title)
+    path = add_path(db, user, data.title, data.technology, None, parse_roadmap_csv(data.content))
+    record_activity(db, user.id, "learning_path_imported", f"Roadmap importado: {path.title}", "learning", path.id)
+    db.commit()
+    db.refresh(path)
+    return path
+
+
+def add_path(
+    db: Session,
+    user: User,
+    title: str,
+    technology: str | None,
+    description: str | None,
+    stages: list[ParsedStage],
+) -> LearningPath:
+    """Monta trilha, etapas e conteúdos sem commit, para quem chama decidir quando salvar."""
+    path = LearningPath(user_id=user.id, title=title)
     db.add(path)
-    _apply_path(db, path, {"technology": data.technology})
+    _apply_path(db, path, {"technology": technology, "description": description})
     for stage_position, parsed in enumerate(stages):
         stage = LearningPathStage(user_id=user.id, title=parsed.title, position=stage_position)
         path.stages.append(stage)
@@ -91,9 +106,6 @@ def import_path(db: Session, user: User, data: schemas.PathImport) -> LearningPa
                 )
             )
     db.flush()
-    record_activity(db, user.id, "learning_path_imported", f"Roadmap importado: {path.title}", "learning", path.id)
-    db.commit()
-    db.refresh(path)
     return path
 
 

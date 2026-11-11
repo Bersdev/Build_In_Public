@@ -1,4 +1,31 @@
 export type Priority = "low" | "medium" | "high";
+
+/** Plano proposto pela IA a partir de um CSV (rota /imports/analyze). */
+export interface ImportPlan {
+  roadmap: {
+    title: string;
+    technology: string | null;
+    description: string | null;
+    stages: { title: string; items: { title: string; url: string | null; notes: string | null }[] }[];
+  } | null;
+  goals: { title: string; description: string | null; kind: GoalKind; target_value: number; due_date: string | null }[];
+  projects: { name: string; description: string | null; objective: string | null; technologies: string[]; due_date: string | null }[];
+  tasks: {
+    title: string;
+    description: string | null;
+    priority: Priority;
+    due_date: string | null;
+    project: string | null;
+    technology: string | null;
+  }[];
+}
+
+export interface ImportResult {
+  learning_path_id: number | null;
+  goals: number;
+  projects: number;
+  tasks: number;
+}
 export type ProjectStatus = "planning" | "in_progress" | "paused" | "completed" | "archived";
 export type TaskStatus = "todo" | "in_progress" | "done";
 export type CourseStatus = "planned" | "in_progress" | "completed";
