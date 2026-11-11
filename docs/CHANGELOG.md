@@ -1,5 +1,16 @@
 # Alterações
 
+## 2026-11-11 (tarde)
+
+### Adicionado
+
+- Importar roadmap de um arquivo CSV (tela Roadmaps → "Importar CSV"). Uma linha por conteúdo; colunas `etapa`, `item`, `link` e `notas`, com só `item` obrigatória. Aceita vírgula ou ponto e vírgula, UTF-8 ou Windows-1252 (Excel em português) e nomes de coluna em português ou inglês. Erros apontam a linha, e nada é salvo se houver erro. Limites: 500 conteúdos, 50 etapas, 300 KB. Rota `POST /api/v1/learning-paths/import`.
+- Modelo de CSV para baixar na própria tela.
+
+### Corrigido
+
+- Trocar a senha encerra as sessões dos outros aparelhos.
+
 ## 2026-11-11
 
 ### Adicionado

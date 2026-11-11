@@ -41,6 +41,11 @@ def create_path(data: schemas.PathCreate, db: Db, user: CurrentUser):
     return service.create_path(db, user, data)
 
 
+@router.post("/learning-paths/import", response_model=schemas.PathDetail, status_code=CREATED)
+def import_path(data: schemas.PathImport, db: Db, user: CurrentUser):
+    return service.import_path(db, user, data)
+
+
 @router.get("/learning-paths/{path_id}", response_model=schemas.PathDetail)
 def read_path(path_id: int, db: Db, user: CurrentUser):
     return get_owned(db, LearningPath, path_id, user.id)

@@ -11,6 +11,7 @@ from app.modules.catalog.service import get_or_create, get_owned
 from app.modules.gamification import rules
 from app.modules.gamification.service import evaluate_achievements, revoke_xp, sync_xp
 from app.modules.learning import schemas
+from app.modules.learning.csv_import import parse_roadmap_csv
 from app.modules.learning.models import Course, LearningPath, LearningPathItem, LearningPathStage
 
 
@@ -71,6 +72,28 @@ def create_path(db: Session, user: User, data: schemas.PathCreate) -> LearningPa
     db.add(path)
     _apply_path(db, path, data.model_dump())
     db.commit()
+    return path
+
+
+def import_path(db: Session, user: User, data: schemas.PathImport) -> LearningPath:
+    """Cria a trilha inteira de uma vez: ou tudo é salvo, ou nada (um único commit)."""
+    stages = parse_roadmap_csv(data.content)
+    path = LearningPath(user_id=user.id, title=data.title)
+    db.add(path)
+    _apply_path(db, path, {"technology": data.technology})
+    for stage_position, parsed in enumerate(stages):
+        stage = LearningPathStage(user_id=user.id, title=parsed.title, position=stage_position)
+        path.stages.append(stage)
+        for item_position, item in enumerate(parsed.items):
+            stage.items.append(
+                LearningPathItem(
+                    user_id=user.id, title=item.title, url=item.url, notes=item.notes, position=item_position
+                )
+            )
+    db.flush()
+    record_activity(db, user.id, "learning_path_imported", f"Roadmap importado: {path.title}", "learning", path.id)
+    db.commit()
+    db.refresh(path)
     return path
 
 

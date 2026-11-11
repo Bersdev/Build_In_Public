@@ -1,7 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
+import { Download, Upload } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { Badge, Button, DeleteButton, Empty, ErrorNote, Loaded, Modal, PageHeader, Progress, SelectField, TextArea, TextField, useAction } from "../components/ui";
 import { api } from "../lib/api";
+import { MAX_CSV_BYTES, decodeCsv, downloadTemplate, titleFromFileName } from "../lib/csv";
 import { formValues, formatDate } from "../lib/format";
 import type { Course, LearningItem, LearningPath, LearningPathDetail, LearningStage } from "../lib/types";
 
@@ -28,6 +30,72 @@ function PathForm({ path, onDone }: { path?: LearningPath; onDone: () => void })
       <ErrorNote error={save.error} />
       <Button type="submit" variant="primary" disabled={save.isPending}>
         Salvar trilha
+      </Button>
+    </form>
+  );
+}
+
+function ImportForm({ onDone }: { onDone: (pathId: number) => void }) {
+  const [file, setFile] = useState<File | null>(null);
+  const [title, setTitle] = useState("");
+  const [fileError, setFileError] = useState<string | null>(null);
+  const importPath = useAction((body: { title: string; technology: string | null; content: string }) =>
+    api.post<LearningPathDetail>("/learning-paths/import", body),
+  );
+
+  function pick(selected: File | null) {
+    setFile(selected);
+    setFileError(selected && selected.size > MAX_CSV_BYTES ? "O arquivo pode ter até 300 KB." : null);
+    if (selected && !title) setTitle(titleFromFileName(selected.name));
+  }
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!file || fileError) return;
+    const technology = String(new FormData(event.currentTarget).get("technology") ?? "").trim();
+    const content = decodeCsv(await file.arrayBuffer());
+    importPath.mutate(
+      { title: title.trim(), technology: technology || null, content },
+      { onSuccess: (path) => onDone((path as LearningPathDetail).id) },
+    );
+  }
+
+  return (
+    <form className="space-y-4" onSubmit={submit}>
+      <div className="rounded-lg border border-line bg-canvas p-4 text-sm text-muted">
+        <p>
+          Uma linha por conteúdo. Só a coluna <code className="num text-ink">item</code> é obrigatória;{" "}
+          <code className="num text-ink">etapa</code>, <code className="num text-ink">link</code> e{" "}
+          <code className="num text-ink">notas</code> são opcionais. Vírgula ou ponto e vírgula funcionam, como o Excel salva.
+        </p>
+        <pre className="num mt-3 overflow-x-auto rounded-md bg-surface p-3 text-[12px] leading-relaxed text-ink">
+          {"etapa,item,link,notas\nFundamentos,Funções,,\nWeb,FastAPI,https://fastapi.tiangolo.com,"}
+        </pre>
+        <button type="button" onClick={downloadTemplate} className="mt-3 inline-flex items-center gap-1.5 text-accent-ink underline">
+          <Download size={14} /> Baixar modelo
+        </button>
+      </div>
+
+      <label className="block">
+        <span className="mb-1.5 block text-[13px] font-medium text-muted">Arquivo CSV</span>
+        <input
+          type="file"
+          accept=".csv,text/csv"
+          required
+          onChange={(event) => pick(event.target.files?.[0] ?? null)}
+          className="control file:mr-3 file:rounded file:border-0 file:bg-raised file:px-2.5 file:py-1 file:text-[13px] file:text-ink"
+        />
+      </label>
+      {fileError && (
+        <p role="alert" className="text-sm text-danger">
+          {fileError}
+        </p>
+      )}
+      <TextField label="Nome da trilha" name="title" value={title} onChange={(event) => setTitle(event.target.value)} required />
+      <TextField label="Tecnologia" name="technology" placeholder="Opcional" />
+      <ErrorNote error={importPath.error} />
+      <Button type="submit" variant="primary" disabled={!file || Boolean(fileError) || importPath.isPending}>
+        <Upload size={15} /> {importPath.isPending ? "Importando..." : "Importar roadmap"}
       </Button>
     </form>
   );
@@ -159,6 +227,7 @@ function PathDetail({ pathId, onEdit }: { pathId: number; onEdit: (path: Learnin
 export function RoadmapsPage() {
   const [editing, setEditing] = useState<LearningPath | "new" | null>(null);
   const [opened, setOpened] = useState<number | null>(null);
+  const [importing, setImporting] = useState(false);
   const query = useQuery({ queryKey: ["paths"], queryFn: () => api.get<LearningPath[]>("/learning-paths") });
   return (
     <>
@@ -166,11 +235,26 @@ export function RoadmapsPage() {
         title="Roadmaps"
         description="Trilhas com etapas e conteúdos para organizar o que você estuda em outras fontes."
         action={
-          <Button variant="primary" onClick={() => setEditing("new")}>
-            Nova trilha
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={() => setImporting(true)}>
+              <Upload size={15} /> Importar CSV
+            </Button>
+            <Button variant="primary" onClick={() => setEditing("new")}>
+              Nova trilha
+            </Button>
+          </div>
         }
       />
+      {importing && (
+        <Modal title="Importar roadmap de um CSV" onClose={() => setImporting(false)}>
+          <ImportForm
+            onDone={(pathId) => {
+              setImporting(false);
+              setOpened(pathId);
+            }}
+          />
+        </Modal>
+      )}
       <Loaded query={query}>
         {(paths) =>
           paths.length === 0 ? (

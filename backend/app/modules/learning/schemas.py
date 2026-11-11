@@ -48,6 +48,13 @@ class PathCreate(Schema):
     target_date: date | None = None
 
 
+class PathImport(Schema):
+    title: Title
+    technology: TechnologyName | None = None
+    # Cerca de 300 KB: sobra para 500 conteúdos com notas.
+    content: Annotated[str, Field(max_length=300_000)]
+
+
 class PathUpdate(PatchSchema):
     non_nullable: ClassVar[frozenset[str]] = frozenset({"title"})
 
