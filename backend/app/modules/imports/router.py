@@ -14,7 +14,7 @@ def ai_status(_user: CurrentUser):
 
 @router.post("/analyze", response_model=schemas.AnalyzeResponse)
 def analyze(data: schemas.AnalyzeRequest, user: CurrentUser):
-    return service.analyze(user, data.content)
+    return service.analyze(user, data)
 
 
 @router.post("/apply", response_model=schemas.ApplyResult, status_code=status.HTTP_201_CREATED)

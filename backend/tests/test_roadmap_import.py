@@ -86,6 +86,13 @@ def test_limita_a_quantidade_de_conteudos(client):
     assert "500" in resposta.json()["detail"]
 
 
+def test_aceita_um_ano_de_semanas(client):
+    linhas = "\n".join(f"Semana {n},Tema {n}" for n in range(1, 53))
+    resposta = _importar(client, f"etapa,item\n{linhas}\n")
+    assert resposta.status_code == 201, resposta.text
+    assert len(resposta.json()["stages"]) == 52
+
+
 def test_titulo_e_obrigatorio(client):
     resposta = client.post(IMPORT, json={"title": " ", "content": CSV_BASICO})
     assert resposta.status_code == 422

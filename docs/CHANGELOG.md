@@ -1,5 +1,15 @@
 # Alterações
 
+## 2026-11-11 (correção da importação com IA)
+
+### Corrigido
+
+- Arquivos grandes falhavam: o plano gratuito da Groq aceita 8 mil tokens por minuto. Agora a IA só classifica as linhas (metas, projetos, tarefas e quais colunas são título, etapa, link e notas) e a trilha é montada com o texto do próprio CSV. O arquivo é analisado em partes, com barra de progresso e espera automática quando a Groq pede pausa. Limite da análise: 150 mil caracteres.
+- A tela mostrava "Não foi possível conectar à API" para qualquer erro 502/503; agora mostra a mensagem real da API.
+- A IA não decide mais ignorar linhas (numa parte, ela chegou a ignorar todas); só repetições exatas do cabeçalho são puladas.
+- Trilhas podem ter até 200 etapas (planos semanais de um ano têm 52). Quando há mais de uma coluna de agrupamento, a IA prefere a mais ampla (fase antes de semana).
+- Sem nome sugerido pela IA, a trilha recebe o nome do arquivo.
+
 ## 2026-11-11 (noite)
 
 ### Adicionado

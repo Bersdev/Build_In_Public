@@ -17,6 +17,21 @@ class GroqError(Exception):
     """Falha ao falar com a Groq, com uma mensagem que pode ir para a tela."""
 
 
+class GroqRateLimited(GroqError):
+    """Limite de uso atingido (429). Basta esperar retry_after segundos e tentar de novo."""
+
+    def __init__(self, message: str, retry_after: int):
+        super().__init__(message)
+        self.retry_after = retry_after
+
+
+def _retry_after(headers) -> int:
+    try:
+        return max(1, min(120, int(float(headers.get("retry-after")))))
+    except (TypeError, ValueError, AttributeError):
+        return 20
+
+
 def is_configured() -> bool:
     return bool(get_settings().groq_api_key.strip())
 
@@ -27,7 +42,7 @@ def _http_error_message(code: int) -> str:
     if code == 429:
         return "A chave da Groq atingiu o limite de uso. Tente de novo em alguns instantes."
     if code == 413:
-        return "O arquivo é grande demais para a IA. Divida o CSV em partes menores."
+        return "Esta parte do arquivo ficou grande demais para a IA. Encurte as células mais longas do CSV."
     return f"A Groq respondeu com erro {code}. Tente de novo em instantes."
 
 
@@ -38,12 +53,16 @@ def complete_json(messages: list[dict], schema: dict) -> dict:
         "model": settings.groq_model,
         "messages": messages,
         "temperature": 0.2,
-        "max_completion_tokens": 16_000,
+        # O plano gratuito permite 8 mil tokens por minuto (pedido + resposta): a resposta é curta.
+        "max_completion_tokens": 3_500,
         "response_format": {
             "type": "json_schema",
             "json_schema": {"name": "plano_de_estudos", "strict": True, "schema": schema},
         },
     }
+    if settings.groq_model.startswith("openai/gpt-oss"):
+        # Raciocínio curto: classificar linhas não pede muito, e os tokens contam no limite.
+        body["reasoning_effort"] = "low"
     request = urllib.request.Request(
         f"{settings.groq_base_url.rstrip('/')}/chat/completions",
         data=json.dumps(body).encode(),
@@ -58,6 +77,8 @@ def complete_json(messages: list[dict], schema: dict) -> dict:
         with urllib.request.urlopen(request, timeout=TIMEOUT_SECONDS) as response:
             data = json.load(response)
     except urllib.error.HTTPError as error:
+        if error.code == 429:
+            raise GroqRateLimited(_http_error_message(429), _retry_after(error.headers)) from error
         raise GroqError(_http_error_message(error.code)) from error
     except (urllib.error.URLError, TimeoutError) as error:
         raise GroqError("Não foi possível falar com a Groq agora. Tente de novo em instantes.") from error

@@ -30,6 +30,18 @@ describe("api", () => {
     await expect(api.get("/x")).rejects.toThrow("Não foi possível conectar à API");
   });
 
+  it.each([502, 503])("mostra a mensagem da própria API no status %i", async (status) => {
+    respondWith(status, { detail: "O arquivo é grande demais para a IA." });
+    await expect(api.get("/x")).rejects.toThrow("O arquivo é grande demais para a IA.");
+  });
+
+  it("guarda quantos segundos esperar quando a API pede pausa", async () => {
+    respondWith(429, { detail: "Limite da Groq.", retry_after: 12 });
+    const error = (await api.get("/x").catch((e) => e)) as ApiError;
+    expect(error.status).toBe(429);
+    expect(error.retryAfter).toBe(12);
+  });
+
   it("explica quando não há conexão", async () => {
     vi.stubGlobal("fetch", vi.fn(async () => Promise.reject(new TypeError("failed"))));
     await expect(api.get("/x")).rejects.toThrow("Não foi possível conectar à API");

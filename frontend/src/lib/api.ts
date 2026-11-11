@@ -8,6 +8,8 @@ export class ApiError extends Error {
     message: string,
     readonly status: number,
     readonly errors: FieldError[] = [],
+    /** Segundos que a API pediu para esperar antes de tentar de novo (status 429). */
+    readonly retryAfter: number | null = null,
   ) {
     super(message);
   }
@@ -27,12 +29,18 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
   } catch {
     throw new ApiError(OFFLINE_MESSAGE, 0);
   }
-  // 502, 503 e 504 vêm do intermediário quando a API está fora do ar.
-  if ([502, 503, 504].includes(response.status)) throw new ApiError(OFFLINE_MESSAGE, response.status);
   if (response.status === 204) return undefined as T;
   const data = await response.json().catch(() => null);
   if (!response.ok) {
-    throw new ApiError(data?.detail ?? "A API respondeu com um erro inesperado.", response.status, data?.errors ?? []);
+    // 502, 503 e 504 sem a mensagem da API vêm do intermediário (Vite ou Vercel): a API está fora do ar.
+    const fromApi = typeof data?.detail === "string";
+    if ([502, 503, 504].includes(response.status) && !fromApi) throw new ApiError(OFFLINE_MESSAGE, response.status);
+    throw new ApiError(
+      fromApi ? data.detail : "A API respondeu com um erro inesperado.",
+      response.status,
+      data?.errors ?? [],
+      typeof data?.retry_after === "number" ? data.retry_after : null,
+    );
   }
   return data as T;
 }

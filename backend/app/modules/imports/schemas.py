@@ -25,7 +25,8 @@ class PlanRoadmap(Schema):
     title: Title
     technology: TechnologyName | None = None
     description: LongText | None = None
-    stages: Annotated[list[PlanStage], Field(min_length=1, max_length=50)]
+    # 200 cobre planos semanais de vários anos.
+    stages: Annotated[list[PlanStage], Field(min_length=1, max_length=200)]
 
 
 class PlanGoal(Schema):
@@ -61,14 +62,35 @@ class ImportPlan(Schema):
     tasks: Annotated[list[PlanTask], Field(max_length=300)] = []
 
 
+ColumnIndex = Annotated[int, Field(ge=0, le=200)]
+
+
+class Columns(Schema):
+    """Qual coluna do CSV guarda cada informação dos conteúdos da trilha."""
+
+    title: ColumnIndex | None = None
+    stage: ColumnIndex | None = None
+    url: ColumnIndex | None = None
+    notes: ColumnIndex | None = None
+
+
 class AnalyzeRequest(Schema):
-    # Cerca de 20 mil tokens: cabe no contexto do modelo e responde dentro do tempo da Vercel.
-    content: Annotated[str, Field(min_length=1, max_length=60_000)]
+    # O arquivo inteiro vai em cada chamada; a análise processa uma parte a partir de start_row.
+    content: Annotated[str, Field(min_length=1, max_length=150_000)]
+    start_row: Annotated[int, Field(ge=0)] = 0
+    # Definidas na primeira parte e repetidas nas seguintes, para todas lerem igual.
+    columns: Columns | None = None
+    # Etapa da última linha da parte anterior, para linhas sem etapa continuarem nela.
+    stage: Title | None = None
 
 
 class AnalyzeResponse(Schema):
     plan: ImportPlan
     warnings: list[str]
+    columns: Columns
+    stage: str | None
+    next_row: int | None
+    total_rows: int
 
 
 class ApplyRequest(Schema):

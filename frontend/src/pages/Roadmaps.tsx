@@ -2,6 +2,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { Download, Sparkles, Upload } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { Badge, Button, DeleteButton, Empty, ErrorNote, Loaded, Modal, PageHeader, Progress, SelectField, TextArea, TextField, useAction } from "../components/ui";
+import { analyzeInParts, type AnalyzeResponse, type Progress as AnalysisState } from "../lib/analyze";
 import { api } from "../lib/api";
 import { MAX_AI_CSV_BYTES, MAX_CSV_BYTES, decodeCsv, downloadTemplate, titleFromFileName } from "../lib/csv";
 import { formValues, formatDate } from "../lib/format";
@@ -36,6 +37,40 @@ function PathForm({ path, onDone }: { path?: LearningPath; onDone: () => void })
   );
 }
 
+/** Espera em segundos, avisando quanto falta a cada segundo. */
+function countdown(seconds: number, onTick: (left: number) => void): Promise<void> {
+  return new Promise((resolve) => {
+    let left = seconds;
+    onTick(left);
+    const timer = window.setInterval(() => {
+      left -= 1;
+      onTick(Math.max(left, 0));
+      if (left <= 0) {
+        window.clearInterval(timer);
+        resolve();
+      }
+    }, 1000);
+  });
+}
+
+function AnalysisProgress({ progress }: { progress: AnalysisState | null }) {
+  const percent = progress && progress.total ? Math.round((progress.done / progress.total) * 100) : 0;
+  return (
+    <div className="space-y-1.5" aria-live="polite">
+      <div className="h-1.5 overflow-hidden rounded-full bg-raised">
+        <div className="h-full rounded-full bg-chart transition-[width] duration-500" style={{ width: `${Math.max(percent, 4)}%` }} />
+      </div>
+      <p className="text-[12px] text-faint">
+        {!progress
+          ? "Analisando a primeira parte do arquivo..."
+          : progress.waiting > 0
+            ? `O plano gratuito da Groq pediu uma pausa. Continuando em ${progress.waiting} s (${progress.done} de ${progress.total} linhas analisadas).`
+            : `${progress.done} de ${progress.total} linhas analisadas...`}
+      </p>
+    </div>
+  );
+}
+
 function ImportForm({ onDone }: { onDone: (pathId: number | null) => void }) {
   const [file, setFile] = useState<File | null>(null);
   const [title, setTitle] = useState("");
@@ -50,8 +85,25 @@ function ImportForm({ onDone }: { onDone: (pathId: number | null) => void }) {
   const importPath = useAction((body: { title: string; technology: string | null; content: string }) =>
     api.post<LearningPathDetail>("/learning-paths/import", body),
   );
+  const [progress, setProgress] = useState<AnalysisState | null>(null);
   const analyze = useMutation({
-    mutationFn: (content: string) => api.post<{ plan: ImportPlan; warnings: string[] }>("/imports/analyze", { content }),
+    mutationFn: async (content: string) => {
+      const result = await analyzeInParts(content, {
+        post: (body) => api.post<AnalyzeResponse>("/imports/analyze", body),
+        wait: (seconds) => countdown(seconds, (left) => setProgress((current) => current && { ...current, waiting: left })),
+        onProgress: setProgress,
+      });
+      const { plan } = result;
+      if (!plan.roadmap && !plan.goals.length && !plan.projects.length && !plan.tasks.length) {
+        throw new Error("A IA não encontrou conteúdos, metas, projetos nem tarefas neste arquivo.");
+      }
+      // Sem nome sugerido pela IA, a trilha recebe o nome do arquivo.
+      if (plan.roadmap && plan.roadmap.title === "Trilha importada" && file) {
+        plan.roadmap = { ...plan.roadmap, title: titleFromFileName(file.name) || plan.roadmap.title };
+      }
+      return result;
+    },
+    onMutate: () => setProgress(null),
     onSuccess: setAnalysis,
   });
 
@@ -150,7 +202,7 @@ function ImportForm({ onDone }: { onDone: (pathId: number | null) => void }) {
         {withAi ? <Sparkles size={15} /> : <Upload size={15} />}
         {analyze.isPending ? "Analisando com IA..." : importPath.isPending ? "Importando..." : withAi ? "Analisar arquivo" : "Importar roadmap"}
       </Button>
-      {analyze.isPending && <p className="text-[12px] text-faint">Pode levar até um minuto em arquivos grandes.</p>}
+      {analyze.isPending && <AnalysisProgress progress={progress} />}
     </form>
   );
 }

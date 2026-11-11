@@ -7,11 +7,13 @@ class AppError(Exception):
     status_code = 400
     default_detail = "Requisição inválida."
 
-    def __init__(self, detail: str | None = None, errors: list[dict] | None = None):
+    def __init__(self, detail: str | None = None, errors: list[dict] | None = None, extra: dict | None = None):
         super().__init__(detail or self.default_detail)
         self.detail = detail or self.default_detail
         # Mesmo formato dos erros de validação: [{"field": ..., "message": ...}].
         self.errors = errors or []
+        # Campos a mais na resposta, como retry_after no limite de uso.
+        self.extra = extra or {}
 
 
 class NotFoundError(AppError):
@@ -59,7 +61,9 @@ def _message(error: dict) -> str:
 def register_error_handlers(app: FastAPI) -> None:
     @app.exception_handler(AppError)
     def handle_app_error(_request: Request, error: AppError):
-        body = {"detail": error.detail, "errors": error.errors} if error.errors else {"detail": error.detail}
+        body = {"detail": error.detail, **error.extra}
+        if error.errors:
+            body["errors"] = error.errors
         return JSONResponse(body, status_code=error.status_code)
 
     @app.exception_handler(RequestValidationError)

@@ -21,7 +21,7 @@ from app.core.errors import ValidationFailed
 from app.core.schemas import WebUrl
 
 MAX_ITEMS = 500
-MAX_STAGES = 50
+MAX_STAGES = 200
 MAX_ERRORS = 20
 DEFAULT_STAGE = "Conteúdos"
 
@@ -73,15 +73,30 @@ def _cell(row: list[str], positions: dict[str, int], column: str) -> str:
     return row[index].strip() if index is not None and index < len(row) else ""
 
 
-def parse_roadmap_csv(content: str) -> list[ParsedStage]:
+def _reader(content: str):
     content = content.lstrip("﻿")
     first_line = content.split("\n", 1)[0]
     delimiter = ";" if first_line.count(";") > first_line.count(",") else ","
     rows = csv.reader(io.StringIO(content), delimiter=delimiter)
-
     header = next(rows, None)
     if not header or not any(cell.strip() for cell in header):
         raise ValidationFailed("O arquivo está vazio.")
+    return header, rows
+
+
+def read_rows(content: str) -> tuple[list[str], list[tuple[int, list[str]]]]:
+    """Cabeçalho e linhas não vazias, cada uma com o número da linha no arquivo."""
+    header, rows = _reader(content)
+    lines = [
+        (line_number, [cell.strip() for cell in row])
+        for line_number, row in enumerate(rows, start=2)
+        if any(cell.strip() for cell in row)
+    ]
+    return [cell.strip() for cell in header], lines
+
+
+def parse_roadmap_csv(content: str) -> list[ParsedStage]:
+    header, rows = _reader(content)
     positions = _map_columns(header)
 
     stages: dict[str, ParsedStage] = {}
