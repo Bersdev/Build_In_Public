@@ -1,4 +1,5 @@
-import { Link, Navigate, Outlet, Route, Routes } from "react-router";
+import { Link, Navigate, Outlet, Route, Routes, useLocation } from "react-router";
+import { LandingPage } from "./pages/Landing";
 import { Layout } from "./components/Layout";
 import { ErrorNote } from "./components/ui";
 import { useMe } from "./lib/auth";
@@ -16,7 +17,10 @@ import { TasksPage } from "./pages/Tasks";
 
 function Protected() {
   const me = useMe();
+  const location = useLocation();
   if (me.isPending) return <p className="p-8 text-muted">Carregando...</p>;
+  // Visitantes veem a página de apresentação no endereço inicial.
+  if (me.data === null && location.pathname === "/") return <LandingPage />;
   if (me.isError) {
     return (
       <div className="mx-auto max-w-md p-8">

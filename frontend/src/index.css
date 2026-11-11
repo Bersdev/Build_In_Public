@@ -1,41 +1,48 @@
-@import "@fontsource-variable/instrument-sans";
-@import "@fontsource-variable/newsreader";
+@import "@fontsource-variable/inter";
+@import "@fontsource-variable/jetbrains-mono";
 @import "tailwindcss";
 
-/* Azul-tinta com âmbar de luz de estudo. Dark é o padrão. */
+/*
+ * "Instrumento de precisão": superfícies quase pretas, bordas finas no lugar de sombras
+ * e um único acento verde-limão para a ação principal e o progresso. Dark é o padrão.
+ */
 :root,
 [data-theme="dark"] {
   color-scheme: dark;
-  --canvas: #131822;
-  --surface: #1a202b;
-  --raised: #232a37;
-  --line: #2d3543;
-  --ink: #e8eaef;
-  --muted: #a2abbc;
-  --faint: #8590a3;
-  --accent: #e8b04a;
-  --accent-ink: #e8b04a;
-  --on-accent: #261a05;
-  --chart: #be8429;
-  --ok: #5cc0a2;
-  --danger: #ef7d74;
+  --canvas: #08090a;
+  --surface: #0f1011;
+  --raised: #18191c;
+  --line: #23252a;
+  --line-strong: #383b3f;
+  --ink: #f2f3f5;
+  --muted: #a3a9b3;
+  --faint: #7d838d;
+  --accent: #d6f34b;
+  --accent-ink: #d6f34b;
+  --on-accent: #0b0d02;
+  --chart: #b9d63a;
+  --ok: #4cc38a;
+  --danger: #f07167;
+  --glow: rgb(214 243 75 / 0.14);
 }
 
 [data-theme="light"] {
   color-scheme: light;
-  --canvas: #f4f5f8;
+  --canvas: #f7f7f8;
   --surface: #ffffff;
-  --raised: #e9ecf1;
-  --line: #d6dae2;
-  --ink: #1a2030;
-  --muted: #4f596b;
-  --faint: #636d80;
-  --accent: #dd9c33;
-  --accent-ink: #855600;
-  --on-accent: #261a05;
-  --chart: #b97a14;
-  --ok: #0f7a5c;
-  --danger: #bf352a;
+  --raised: #eff0f2;
+  --line: #e2e4e8;
+  --line-strong: #c9ccd2;
+  --ink: #0d0e10;
+  --muted: #4a505a;
+  --faint: #646a74;
+  --accent: #c8e83c;
+  --accent-ink: #4b6100;
+  --on-accent: #0b0d02;
+  --chart: #84a10f;
+  --ok: #137a4e;
+  --danger: #c2382d;
+  --glow: rgb(132 161 15 / 0.12);
 }
 
 @theme inline {
@@ -43,6 +50,7 @@
   --color-surface: var(--surface);
   --color-raised: var(--raised);
   --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
   --color-ink: var(--ink);
   --color-muted: var(--muted);
   --color-faint: var(--faint);
@@ -52,8 +60,14 @@
   --color-chart: var(--chart);
   --color-ok: var(--ok);
   --color-danger: var(--danger);
-  --font-sans: "Instrument Sans Variable", ui-sans-serif, system-ui, sans-serif;
-  --font-serif: "Newsreader Variable", ui-serif, Georgia, serif;
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  /* Títulos usam a mesma Inter, com peso médio e espaçamento justo (ver .font-serif abaixo). */
+  --font-serif: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono Variable", ui-monospace, Consolas, monospace;
+}
+
+html {
+  font-feature-settings: "cv01", "ss03", "cv11";
 }
 
 body {
@@ -61,8 +75,14 @@ body {
   color: var(--ink);
   font-family: var(--font-sans);
   font-size: 15px;
-  line-height: 1.5;
+  line-height: 1.55;
   -webkit-font-smoothing: antialiased;
+}
+
+/* Títulos: peso 560 e tracking negativo, sem negrito pesado. */
+.font-serif {
+  font-weight: 560;
+  letter-spacing: -0.022em;
 }
 
 :focus-visible {
@@ -70,17 +90,27 @@ body {
   outline-offset: 2px;
 }
 
+::selection {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
 @layer components {
   .control {
     width: 100%;
     border: 1px solid var(--line);
     border-radius: 6px;
-    background: var(--canvas);
-    padding: 0.45rem 0.65rem;
+    background: color-mix(in srgb, var(--canvas) 70%, var(--surface));
+    padding: 0.5rem 0.7rem;
     color: var(--ink);
+    transition: border-color 0.15s;
+  }
+  .control:hover {
+    border-color: var(--line-strong);
   }
   .control:focus-visible {
     outline-offset: 0;
+    border-color: transparent;
   }
   .control::placeholder {
     color: var(--faint);
@@ -88,9 +118,16 @@ body {
   .prose-note {
     white-space: pre-wrap;
     overflow-wrap: anywhere;
-    font-family: var(--font-serif);
-    font-size: 1.0625rem;
-    line-height: 1.6;
+    font-size: 1rem;
+    line-height: 1.7;
+  }
+  .num {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+  }
+  .hairline {
+    box-shadow: inset 0 0 0 1px var(--line);
   }
 }
 
@@ -99,7 +136,22 @@ dialog {
   color: var(--ink);
 }
 dialog::backdrop {
-  background: rgb(5 8 14 / 0.65);
+  background: rgb(0 0 0 / 0.7);
+  backdrop-filter: blur(2px);
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.rise {
+  animation: rise 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
 
 @media (prefers-reduced-motion: reduce) {

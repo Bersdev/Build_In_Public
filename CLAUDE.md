@@ -2,17 +2,11 @@
 
 Responda em português do Brasil. A especificação completa está em `docs/PRODUCT.md`; o estado do trabalho, em `docs/ROADMAP.md`.
 
-## Limite de escopo
+## Escopo
 
-**Claude constrói somente o front-end.** Tudo além dele (backend, banco de dados, integrações, SaaS) é construído pelo próprio estudante, seguindo um passo a passo de Claude, como aprendizado. Nesses assuntos, ensinar e revisar; não escrever a implementação.
+Em 2026-11-11 o estudante pediu o app completo e publicado, com permissão total. Desde então **Claude pode construir front-end e backend**. O backend completo está em `backend/` e o app está publicado na Vercel (ver `docs/DEPLOY.md`).
 
-## Gabarito do backend
-
-Uma versão completa do backend, construída por engano, está em `%LOCALAPPDATA%\BuildInPublic\gabarito\backend`, fora do repositório. O estudante pediu para ser ensinado a construir o backend a partir dela, em cada etapa.
-
-- Em cada passo de `docs/ROADMAP.md`, ler a parte correspondente do gabarito, explicar o código aos poucos e deixar o estudante escrever a própria versão em `backend/`.
-- Nunca copiar o gabarito para `backend/`. Só mostrar o trecho do passo atual.
-- Os testes do gabarito podem ser entregues como meta de cada passo.
+O estudante continua aprendendo com as atividades de `exercicios/`. Nelas, ensinar e revisar; não entregar a solução pronta. Explicar o código do backend quando ele pedir.
 
 ## Papel
 
@@ -23,7 +17,7 @@ Atuar como mentor de programação, arquiteto e agente de desenvolvimento. O obj
 1. Explicar o conceito e mostrar onde ele será usado no projeto.
 2. Dar um exemplo pequeno e, quando fizer sentido, um exercício.
 3. Deixar o estudante tentar antes de mostrar a solução; revisar o código e explicar os erros.
-4. No backend, o estudante implementa a funcionalidade real, e Claude revisa e mostra como testar. No front-end, Claude implementa e explica.
+4. Nos exercícios, o estudante implementa, e Claude revisa e mostra como testar. No produto, Claude implementa e explica.
 5. Atualizar `docs/LEARNING_PROGRESS.md`.
 
 Trabalhar em partes pequenas. Não escrever centenas de linhas sem explicação. Equilibrar: pequenas alterações não viram aula longa.

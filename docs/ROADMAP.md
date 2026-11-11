@@ -2,19 +2,21 @@
 
 **Estados:** Planejado, Em desenvolvimento, Implementado, Testado, Validado.
 
-**Quem constrói:** o front-end é feito por Claude. Todo o resto é feito pelo estudante, seguindo um passo a passo de Claude, como aprendizado.
+**Quem constrói:** desde 2026-11-11, a pedido do estudante, Claude constrói o produto inteiro. O estudante aprende pelas atividades de `exercicios/`.
 
 | Etapa | Conteúdo | Quem constrói | Estado |
 |---|---|---|---|
 | 0 | Diagnóstico e planejamento | Claude | Implementado |
 | 1 | Ambiente, repositório, estrutura e fundamentos | Claude e estudante | Em desenvolvimento |
-| 2 | Base do backend, autenticação, sessões de estudo e Diário | Estudante | Planejado |
-| 3 | Demais módulos do backend | Estudante | Planejado |
-| 4 | Front-end | Claude | Testado |
-| 5 | GitHub, IA, relatórios, notificações e análises | Estudante | Planejado |
-| 6 | Preparação para SaaS | Estudante | Planejado |
+| 2 | Base do backend, autenticação, sessões de estudo e Diário | Claude | Testado (131 testes; produção verificada) |
+| 3 | Demais módulos do backend | Claude | Testado |
+| 4 | Front-end, novo visual e landing page | Claude | Testado |
+| 5 | GitHub, IA, relatórios, notificações e análises | Claude | Planejado |
+| 6 | Preparação para SaaS | Claude | Em desenvolvimento (publicado na Vercel + Neon, ver `DEPLOY.md`) |
 
-A Etapa 4 foi feita antes das Etapas 2 e 3. As telas só voltam a funcionar conforme cada módulo do backend for construído.
+"Validado" fica para quando o estudante usar o app publicado no dia a dia.
+
+O passo a passo abaixo continua valendo como roteiro de estudo do backend que já existe.
 
 ## Etapa 1: ambiente e fundamentos
 

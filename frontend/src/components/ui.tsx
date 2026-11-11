@@ -6,9 +6,10 @@ import { ApiError } from "../lib/api";
 type Variant = "primary" | "ghost" | "danger";
 
 const VARIANTS: Record<Variant, string> = {
-  primary: "bg-accent text-on-accent font-medium hover:brightness-110",
-  ghost: "border border-line text-ink hover:bg-raised",
-  danger: "border border-danger text-danger hover:bg-raised",
+  primary:
+    "bg-accent text-on-accent font-[560] shadow-[inset_0_-1px_0_rgb(0_0_0/0.18),0_1px_2px_rgb(0_0_0/0.3)] hover:brightness-105",
+  ghost: "border border-line bg-surface text-ink hover:border-line-strong hover:bg-raised",
+  danger: "border border-danger/60 text-danger hover:bg-danger/10",
 };
 
 export function Button({
@@ -20,7 +21,7 @@ export function Button({
     <button
       type="button"
       {...props}
-      className={`inline-flex items-center justify-center gap-1.5 rounded-md px-3 py-1.5 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${VARIANTS[variant]} ${className}`}
+      className={`inline-flex h-8 items-center justify-center gap-1.5 rounded-md px-3 text-[13px] transition-[background-color,border-color,filter] active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50 ${VARIANTS[variant]} ${className}`}
     />
   );
 }
@@ -28,7 +29,7 @@ export function Button({
 export function Field({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-sm text-muted">{label}</span>
+      <span className="mb-1.5 block text-[13px] font-medium text-muted">{label}</span>
       {children}
       {hint && <span className="mt-1 block text-xs text-faint">{hint}</span>}
     </label>
@@ -85,29 +86,29 @@ export function SelectField({
 
 const TONES = {
   neutral: "bg-raised text-muted",
-  accent: "bg-raised text-accent-ink",
-  ok: "bg-raised text-ok",
-  danger: "bg-raised text-danger",
+  accent: "bg-accent/12 text-accent-ink",
+  ok: "bg-ok/12 text-ok",
+  danger: "bg-danger/12 text-danger",
 };
 
 export function Badge({ tone = "neutral", children }: { tone?: keyof typeof TONES; children: ReactNode }) {
-  return <span className={`inline-block rounded px-1.5 py-0.5 text-xs ${TONES[tone]}`}>{children}</span>;
+  return <span className={`inline-block rounded px-1.5 py-0.5 text-xs font-medium ${TONES[tone]}`}>{children}</span>;
 }
 
 export function Progress({ value, label }: { value: number; label: string }) {
   return (
-    <div role="progressbar" aria-label={label} aria-valuenow={value} aria-valuemin={0} aria-valuemax={100} className="h-1.5 rounded-full bg-raised">
-      <div className="h-full rounded-full bg-chart" style={{ width: `${Math.min(100, value)}%` }} />
+    <div role="progressbar" aria-label={label} aria-valuenow={value} aria-valuemin={0} aria-valuemax={100} className="h-1.5 overflow-hidden rounded-full bg-raised">
+      <div className="h-full rounded-full bg-chart transition-[width] duration-500" style={{ width: `${Math.min(100, value)}%` }} />
     </div>
   );
 }
 
 export function PageHeader({ title, description, action }: { title: string; description?: string; action?: ReactNode }) {
   return (
-    <header className="mb-6 flex flex-wrap items-end justify-between gap-3">
+    <header className="mb-8 flex flex-wrap items-end justify-between gap-4 border-b border-line pb-6">
       <div>
-        <h1 className="font-serif text-3xl leading-tight">{title}</h1>
-        {description && <p className="mt-1 max-w-[65ch] text-muted">{description}</p>}
+        <h1 className="font-serif text-[28px] leading-tight sm:text-[32px]">{title}</h1>
+        {description && <p className="mt-1.5 max-w-[65ch] text-muted">{description}</p>}
       </div>
       {action}
     </header>
@@ -117,19 +118,19 @@ export function PageHeader({ title, description, action }: { title: string; desc
 export function SectionTitle({ children, action }: { children: ReactNode; action?: ReactNode }) {
   return (
     <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-      <h2 className="font-serif text-xl">{children}</h2>
+      <h2 className="font-serif text-[17px]">{children}</h2>
       {action}
     </div>
   );
 }
 
 export function Panel({ className = "", children }: { className?: string; children: ReactNode }) {
-  return <div className={`rounded-[10px] border border-line bg-surface p-4 ${className}`}>{children}</div>;
+  return <div className={`rounded-xl border border-line bg-surface p-5 ${className}`}>{children}</div>;
 }
 
 export function Empty({ children, action }: { children: ReactNode; action?: ReactNode }) {
   return (
-    <div className="rounded-[10px] border border-dashed border-line px-4 py-8 text-center text-muted">
+    <div className="rounded-xl border border-dashed border-line-strong/70 px-4 py-10 text-center text-muted">
       <p>{children}</p>
       {action && <div className="mt-3">{action}</div>}
     </div>
@@ -199,10 +200,10 @@ export function Modal({ title, onClose, children }: { title: string; onClose: ()
     <dialog
       ref={ref}
       onClose={onClose}
-      className="w-[calc(100%-2rem)] max-w-2xl rounded-[14px] border border-line bg-surface p-0 shadow-2xl"
+      className="w-[calc(100%-2rem)] max-w-2xl rounded-xl border border-line-strong bg-surface p-0 shadow-[0_24px_64px_rgb(0_0_0/0.5)]"
     >
-      <div className="flex items-center justify-between border-b border-line px-5 py-3">
-        <h2 className="font-serif text-xl">{title}</h2>
+      <div className="flex items-center justify-between border-b border-line px-5 py-3.5">
+        <h2 className="font-serif text-[17px]">{title}</h2>
         <button type="button" aria-label="Fechar" onClick={() => ref.current?.close()} className="rounded p-1 text-muted hover:text-ink">
           <X size={18} />
         </button>

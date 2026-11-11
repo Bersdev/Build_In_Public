@@ -9,13 +9,47 @@ import type { User } from "../lib/types";
 
 function AuthFrame({ title, children, footer }: { title: string; children: ReactNode; footer: ReactNode }) {
   return (
-    <div className="flex min-h-screen items-center justify-center px-4 py-10">
-      <div className="w-full max-w-sm">
-        <Logo />
-        <h1 className="mb-5 mt-8 font-serif text-3xl leading-tight">{title}</h1>
-        {children}
-        <div className="mt-5 text-sm text-muted">{footer}</div>
+    <div className="grid min-h-screen lg:grid-cols-[1fr_minmax(0,560px)]">
+      <div className="flex flex-col px-4 py-6 sm:px-10">
+        <Link to="/" aria-label="Página inicial" className="self-start">
+          <Logo />
+        </Link>
+        <div className="rise mx-auto my-auto w-full max-w-sm py-10">
+          <h1 className="mb-6 font-serif text-[28px] leading-tight">{title}</h1>
+          <div className="rounded-xl border border-line bg-surface p-5">{children}</div>
+          <div className="mt-5 text-sm text-muted">{footer}</div>
+        </div>
       </div>
+      <aside className="relative hidden overflow-hidden border-l border-line bg-surface lg:block" aria-hidden="true">
+        <div className="absolute inset-0 bg-[radial-gradient(60%_50%_at_70%_20%,var(--glow),transparent)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(var(--line)_1px,transparent_1px),linear-gradient(90deg,var(--line)_1px,transparent_1px)] bg-[size:48px_48px] opacity-40 [mask-image:radial-gradient(70%_60%_at_50%_40%,black,transparent)]" />
+        <div className="relative flex h-full flex-col justify-end p-12">
+          <div className="mb-10 space-y-2">
+            <p className="text-[11px] uppercase tracking-[0.08em] text-faint">Exemplo de resumo semanal</p>
+            {[
+              ["Python", "2h 15min", 82],
+              ["SQL", "1h 40min", 61],
+              ["React", "55min", 34],
+            ].map(([name, time, pct]) => (
+              <div key={name as string} className="rounded-lg border border-line bg-canvas/60 p-3 backdrop-blur">
+                <div className="mb-2 flex justify-between text-[13px]">
+                  <span>{name}</span>
+                  <span className="num text-muted">{time}</span>
+                </div>
+                <div className="h-1 rounded-full bg-raised">
+                  <div className="h-full rounded-full bg-chart" style={{ width: `${pct}%` }} />
+                </div>
+              </div>
+            ))}
+          </div>
+          <p className="font-serif text-[26px] leading-[1.2]">
+            Cada hora estudada vira <span className="text-accent-ink">progresso visível</span>.
+          </p>
+          <p className="mt-3 max-w-sm text-muted">
+            Registre estudos, projetos e aprendizados. Os números são calculados a partir do que você faz, nunca inventados.
+          </p>
+        </div>
+      </aside>
     </div>
   );
 }
@@ -130,12 +164,12 @@ export function ForgotPasswordPage() {
     >
       {sent ? (
         <div className="space-y-2 text-muted">
-          <p>Se o e-mail estiver cadastrado, enviaremos as instruções.</p>
-          {import.meta.env.DEV && (
-            <p className="text-sm text-faint">
-              O envio de e-mail ainda não existe. Em desenvolvimento, o link aparece no terminal da API.
-            </p>
-          )}
+          <p>Pedido registrado.</p>
+          <p className="text-sm text-faint">
+            {import.meta.env.DEV
+              ? "O envio de e-mail ainda não existe. Em desenvolvimento, o link aparece no terminal da API."
+              : "O envio de e-mail ainda não está ativo nesta versão. Se não conseguir entrar, fale com o administrador."}
+          </p>
         </div>
       ) : (
         <form className="space-y-3" onSubmit={(event) => submitForm(event, forgot.mutate)}>

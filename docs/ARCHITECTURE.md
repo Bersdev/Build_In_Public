@@ -48,17 +48,9 @@ O navegador só fala com o Vite, que encaminha `/api` para `http://127.0.0.1:800
 
 O contrato que o backend precisa cumprir está em `frontend/src/lib/types.ts` (formato dos dados) e nas chamadas de `frontend/src/pages/` (rotas).
 
-## Backend de referência (gabarito)
+## Backend
 
-Uma versão completa do backend está guardada fora do repositório, em `%LOCALAPPDATA%\BuildInPublic\gabarito\backend`, com banco próprio e 129 testes. Ela não faz parte do produto e não vai para o GitHub.
-
-Serve como material de ensino: em cada passo, Claude explica esse código e o estudante escreve a própria versão. Por estar só neste computador, ela não tem cópia de segurança.
-
-Para ver o front-end funcionando com ela, sem usar o backend do projeto:
-
-```powershell
-& $py -m uvicorn app.main:app --app-dir "$env:LOCALAPPDATA\BuildInPublic\gabarito\backend"
-```
+O backend completo está em `backend/`, com 131 testes. Localmente usa SQLite em `%LOCALAPPDATA%\BuildInPublic`; em produção usa o PostgreSQL da Neon (`DATABASE_URL`). A publicação está descrita em `DEPLOY.md`.
 
 ## Decisões
 
@@ -73,6 +65,5 @@ Para ver o front-end funcionando com ela, sem usar o backend do projeto:
 ## Pontos de atenção
 
 - **OneDrive:** o projeto está em uma pasta sincronizada, e isso pode travar ou corromper arquivos em uso. Por isso o ambiente virtual e o SQLite ficam em `%LOCALAPPDATA%\BuildInPublic`. A `.git` continua exposta a esse risco; mover o projeto eliminaria o problema.
-- **SQLite e PostgreSQL:** o SQLite não aplica chaves estrangeiras por padrão (exige `PRAGMA foreign_keys=ON`) e é mais permissivo com tipos. Antes de produção, os testes também devem rodar em PostgreSQL.
-- **Ambiente virtual:** ele já contém as bibliotecas do gabarito (SQLAlchemy, Alembic e outras). Ao usar uma delas pela primeira vez, ainda é preciso adicioná-la ao `requirements.txt`.
+- **SQLite e PostgreSQL:** o SQLite não aplica chaves estrangeiras por padrão (exige `PRAGMA foreign_keys=ON`) e é mais permissivo com tipos. Os testes automáticos rodam em SQLite; no PostgreSQL foram verificados as migrações e um teste de ponta a ponta em produção (cadastro, login, sessão de estudo, Dashboard, gamificação, exclusão de conta).
 - **Limitações conhecidas:** foto e imagem de projeto são endereços da web, sem envio de arquivo. Login e cadastro ainda não têm limite de tentativas. A busca do SQLite ignora maiúsculas só em letras sem acento.

@@ -27,3 +27,8 @@ dist/
 .vscode/
 .claude/launch.json
 .claude/settings.local.json
+
+# Vercel: ligação local do projeto e variáveis baixadas (com segredos)
+.vercel
+.env*
+!.env.example

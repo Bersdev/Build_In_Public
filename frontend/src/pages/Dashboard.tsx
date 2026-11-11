@@ -61,7 +61,7 @@ function Hero({ data, onRegister }: { data: DashboardData; onRegister: () => voi
     <section className="mb-10">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="max-w-[24ch] font-serif text-4xl leading-[1.1] sm:text-5xl">
+          <h1 className="max-w-[24ch] font-serif text-[32px] leading-[1.1] sm:text-[40px]">
             {data.week_minutes > 0
               ? `Nesta semana você estudou ${formatMinutes(data.week_minutes)}.`
               : "Nenhum estudo registrado nesta semana."}

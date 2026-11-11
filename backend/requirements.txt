@@ -1,3 +1,2 @@
-# Necessário para executar a API.
-fastapi==0.162.0
-uvicorn==0.54.0
+# A lista fica na raiz, onde a Vercel a procura.
+-r ../requirements.txt

@@ -34,12 +34,24 @@ const ACCOUNT: [string, string, ComponentType<{ size?: number }>][] = [
   ["/configuracoes", "Configurações", SettingsIcon],
 ];
 
+export function LogoMark({ size = 22 }: { size?: number }) {
+  return (
+    <span
+      className="grid place-items-center rounded-md bg-accent"
+      style={{ width: size, height: size }}
+      aria-hidden="true"
+    >
+      <svg width={size * 0.64} height={size * 0.64} viewBox="0 0 32 32">
+        <path d="M6 26V17M16 26V7M26 26V12" stroke="var(--on-accent)" strokeWidth="5.5" strokeLinecap="round" />
+      </svg>
+    </span>
+  );
+}
+
 export function Logo() {
   return (
-    <span className="flex items-center gap-2 font-serif text-lg">
-      <svg width="20" height="20" viewBox="0 0 32 32" aria-hidden="true">
-        <path d="M6 26V15M16 26V7M26 26V19" stroke="var(--accent)" strokeWidth="5" strokeLinecap="round" />
-      </svg>
+    <span className="flex items-center gap-2 text-[15px] font-[600] tracking-[-0.015em]">
+      <LogoMark />
       Build in Public
     </span>
   );
@@ -51,15 +63,31 @@ function NavItem({ to, label, icon: Icon }: { to: string; label: string; icon: C
       to={to}
       end={to === "/"}
       className={({ isActive }) =>
-        `flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm transition-colors ${
-          isActive ? "bg-raised text-ink" : "text-muted hover:bg-raised hover:text-ink"
+        `group relative flex items-center gap-2.5 rounded-md px-2.5 py-[7px] text-[13px] transition-colors ${
+          isActive ? "bg-raised text-ink" : "text-muted hover:bg-raised/70 hover:text-ink"
         }`
       }
     >
-      <Icon size={16} />
-      {label}
+      {({ isActive }) => (
+        <>
+          {isActive && <span className="absolute -left-3 top-1.5 bottom-1.5 w-[3px] rounded-r bg-accent" aria-hidden="true" />}
+          <span className={isActive ? "text-accent-ink" : "text-faint group-hover:text-muted"}>
+            <Icon size={16} />
+          </span>
+          {label}
+        </>
+      )}
     </NavLink>
   );
+}
+
+function initials(name: string) {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join("");
 }
 
 function useThemeFromSettings() {
@@ -94,43 +122,56 @@ export function Layout() {
   }
 
   return (
-    <div className="min-h-screen lg:grid lg:grid-cols-[232px_1fr]">
-      <div className="flex items-center justify-between border-b border-line px-4 py-3 lg:hidden">
+    <div className="min-h-screen lg:grid lg:grid-cols-[240px_1fr]">
+      <div className="sticky top-0 z-20 flex items-center justify-between border-b border-line bg-canvas/85 px-4 py-3 backdrop-blur lg:hidden">
         <Logo />
-        <button type="button" aria-label={open ? "Fechar menu" : "Abrir menu"} aria-expanded={open} onClick={() => setOpen(!open)} className="rounded p-1 text-muted">
+        <button type="button" aria-label={open ? "Fechar menu" : "Abrir menu"} aria-expanded={open} onClick={() => setOpen(!open)} className="rounded-md p-1.5 text-muted hover:bg-raised">
           {open ? <X size={20} /> : <Menu size={20} />}
         </button>
       </div>
 
       <aside
-        className={`${open ? "block" : "hidden"} border-b border-line px-3 py-3 lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col lg:border-b-0 lg:border-r`}
+        className={`${open ? "block" : "hidden"} border-b border-line bg-surface px-3 py-3 lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col lg:border-b-0 lg:border-r`}
       >
-        <div className="hidden px-2.5 pb-5 pt-1 lg:block">
+        <div className="hidden px-2.5 pb-6 pt-2 lg:block">
           <Logo />
         </div>
-        <nav aria-label="Principal" className="space-y-0.5">
+        <p className="px-2.5 pb-1.5 text-[11px] font-medium uppercase tracking-[0.08em] text-faint">Espaço de estudo</p>
+        <nav aria-label="Principal" className="space-y-px">
           {MAIN.map(([to, label, icon]) => (
             <NavItem key={to} to={to} label={label} icon={icon} />
           ))}
         </nav>
-        <nav aria-label="Conta" className="mt-4 space-y-0.5 lg:mt-auto">
+        <nav aria-label="Conta" className="mt-6 space-y-px lg:mt-auto">
           {ACCOUNT.map(([to, label, icon]) => (
             <NavItem key={to} to={to} label={label} icon={icon} />
           ))}
           <button
             type="button"
             onClick={logout}
-            className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-sm text-muted transition-colors hover:bg-raised hover:text-ink"
+            className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-[7px] text-[13px] text-muted transition-colors hover:bg-raised/70 hover:text-ink"
           >
-            <LogOut size={16} />
+            <span className="text-faint">
+              <LogOut size={16} />
+            </span>
             Sair
           </button>
-          {user && <p className="truncate px-2.5 pt-2 text-xs text-faint">{user.name}</p>}
+          {user && (
+            <div className="mt-3 flex items-center gap-2.5 border-t border-line px-2.5 pt-3">
+              <span className="grid size-7 shrink-0 place-items-center rounded-full bg-raised text-[11px] font-semibold text-muted ring-1 ring-line-strong">
+                {initials(user.name)}
+              </span>
+              <span className="min-w-0">
+                <span className="block truncate text-[13px] text-ink">{user.name}</span>
+                <span className="block truncate text-[11px] text-faint">{user.email}</span>
+              </span>
+            </div>
+          )}
         </nav>
       </aside>
 
-      <main className="min-w-0 px-4 py-6 sm:px-8 lg:py-10">
-        <div className="mx-auto max-w-[1080px]">
+      <main className="min-w-0 px-4 py-6 sm:px-8 lg:px-12 lg:py-12">
+        <div className="rise mx-auto max-w-[1100px]" key={location.pathname}>
           <Outlet />
         </div>
       </main>

@@ -1,0 +1,11 @@
+exercicios
+docs
+**/node_modules
+**/__pycache__
+**/.pytest_cache
+backend/tests
+backend/.env
+frontend/dist
+.vscode
+.claude
+.env*
