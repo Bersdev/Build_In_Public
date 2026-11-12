@@ -1,5 +1,5 @@
 # Dependências da API. A Vercel instala este arquivo; localmente, use backend/requirements-dev.txt.
-fastapi==0.162.0
+fastapi==0.162.2
 uvicorn==0.54.0
 sqlalchemy==2.1.8
 alembic==1.20.1
