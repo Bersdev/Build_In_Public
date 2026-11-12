@@ -1,4 +1,5 @@
 # Reúne todos os modelos para o Alembic e os testes enxergarem as tabelas.
+from app.core import rate_limit as rate_limit_models  # noqa: F401
 from app.modules.activity import models as activity_models  # noqa: F401
 from app.modules.auth import models as auth_models  # noqa: F401
 from app.modules.catalog import models as catalog_models  # noqa: F401

@@ -33,6 +33,8 @@ export interface Progress {
 }
 
 const MAX_WAITS_IN_A_ROW = 6;
+/** Pausas da Groq são curtas. Acima disso o limite é do próprio app (por hora), e esperar não adianta. */
+const MAX_AUTOMATIC_WAIT_SECONDS = 120;
 
 /**
  * O plano gratuito da Groq aceita 8 mil tokens por minuto. A API analisa o arquivo em partes;
@@ -57,9 +59,14 @@ export async function analyzeInParts(
     try {
       response = await deps.post(request);
     } catch (error) {
-      if (error instanceof ApiError && error.status === 429 && waits < MAX_WAITS_IN_A_ROW) {
+      const seconds = error instanceof ApiError ? (error.retryAfter ?? 20) : 0;
+      if (
+        error instanceof ApiError &&
+        error.status === 429 &&
+        seconds <= MAX_AUTOMATIC_WAIT_SECONDS &&
+        waits < MAX_WAITS_IN_A_ROW
+      ) {
         waits += 1;
-        const seconds = error.retryAfter ?? 20;
         deps.onProgress({ done: request.start_row, total, waiting: seconds });
         await deps.wait(seconds);
         continue;

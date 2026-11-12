@@ -13,7 +13,8 @@ def ai_status(_user: CurrentUser):
 
 
 @router.post("/analyze", response_model=schemas.AnalyzeResponse)
-def analyze(data: schemas.AnalyzeRequest, user: CurrentUser):
+def analyze(data: schemas.AnalyzeRequest, db: Db, user: CurrentUser):
+    service.charge_analysis(db, user)
     return service.analyze(user, data)
 
 

@@ -8,6 +8,7 @@ from argon2.exceptions import InvalidHashError, VerificationError
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
+from app.core import rate_limit
 from app.core.config import get_settings
 from app.core.database import utcnow
 from app.core.errors import ConflictError, UnauthorizedError, ValidationFailed
@@ -17,6 +18,15 @@ logger = logging.getLogger("uvicorn.error")
 _hasher = PasswordHasher()
 # Usado quando o e-mail não existe, para o login levar o mesmo tempo nos dois casos.
 _DUMMY_HASH = _hasher.hash("senha-que-nunca-sera-usada")
+
+
+# Limites de tentativas (ver app/core/rate_limit.py).
+LOGIN_WINDOW = 900  # 15 minutos
+LOGIN_FAILURES_PER_EMAIL = 5
+LOGIN_FAILURES_PER_IP = 30
+HOUR = 3600
+REGISTER_PER_IP = 20
+FORGOT_PASSWORD_PER_IP = 10
 
 
 def hash_password(password: str) -> str:
@@ -62,6 +72,29 @@ def authenticate(db: Session, email: str, password: str) -> User:
     if user is None or not valid:
         raise UnauthorizedError("E-mail ou senha incorretos.")
     return user
+
+
+def login(db: Session, email: str, password: str, ip: str) -> User:
+    """Entra na conta, recusando quem erra a senha muitas vezes (por e-mail e por IP)."""
+    email_key = f"login:email:{email.lower()}"
+    ip_key = f"login:ip:{ip}"
+    rate_limit.ensure_allowed(db, email_key, LOGIN_FAILURES_PER_EMAIL, LOGIN_WINDOW)
+    rate_limit.ensure_allowed(db, ip_key, LOGIN_FAILURES_PER_IP, LOGIN_WINDOW)
+    try:
+        user = authenticate(db, email, password)
+    except UnauthorizedError:
+        rate_limit.record(db, email_key)
+        rate_limit.record(db, ip_key)
+        raise
+    rate_limit.reset(db, email_key)
+    return user
+
+
+def throttle(db: Session, name: str, ip: str, limit: int, window_seconds: int) -> None:
+    """Conta uma tentativa de `name` (cadastro, recuperação) vinda deste IP."""
+    key = f"{name}:ip:{ip}"
+    rate_limit.ensure_allowed(db, key, limit, window_seconds)
+    rate_limit.record(db, key)
 
 
 def user_from_token(db: Session, token: str | None) -> User | None:

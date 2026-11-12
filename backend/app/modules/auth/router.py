@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Request, Response, status
 
 from app.core.config import get_settings
+from app.core.rate_limit import client_ip
 from app.core.database import Db
 from app.modules.auth import schemas, service
 from app.modules.auth.dependencies import CurrentUser
@@ -28,15 +29,16 @@ def clear_session_cookie(response: Response) -> None:
 
 
 @router.post("/register", response_model=UserRead, status_code=status.HTTP_201_CREATED)
-def register(data: schemas.RegisterRequest, db: Db, response: Response):
+def register(data: schemas.RegisterRequest, request: Request, db: Db, response: Response):
+    service.throttle(db, "register", client_ip(request), service.REGISTER_PER_IP, service.HOUR)
     user = service.register(db, data.name, data.email, data.password, data.timezone)
     _start_session(db, response, user)
     return user
 
 
 @router.post("/login", response_model=UserRead)
-def login(data: schemas.LoginRequest, db: Db, response: Response):
-    user = service.authenticate(db, data.email, data.password)
+def login(data: schemas.LoginRequest, request: Request, db: Db, response: Response):
+    user = service.login(db, data.email, data.password, client_ip(request))
     _start_session(db, response, user)
     return user
 
@@ -53,7 +55,8 @@ def me(user: CurrentUser):
 
 
 @router.post("/forgot-password", status_code=status.HTTP_202_ACCEPTED)
-def forgot_password(data: schemas.ForgotPasswordRequest, db: Db):
+def forgot_password(data: schemas.ForgotPasswordRequest, request: Request, db: Db):
+    service.throttle(db, "forgot", client_ip(request), service.FORGOT_PASSWORD_PER_IP, service.HOUR)
     # A resposta é a mesma para qualquer e-mail, para não revelar quem tem conta.
     service.request_password_reset(db, data.email)
     return {"detail": "Se o e-mail estiver cadastrado, enviaremos as instruções."}

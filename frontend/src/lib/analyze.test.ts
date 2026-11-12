@@ -40,6 +40,13 @@ describe("analyzeInParts", () => {
     await expect(analyzeInParts("csv", { post, wait: async () => {}, onProgress: () => {} })).rejects.toThrow("Limite.");
   });
 
+  it("não espera quando o limite é do app (pausa longa), mostra o erro", async () => {
+    const post = vi.fn().mockRejectedValue(new ApiError("Muitas tentativas.", 429, [], 3000));
+    const wait = vi.fn(async () => {});
+    await expect(analyzeInParts("csv", { post, wait, onProgress: () => {} })).rejects.toThrow("Muitas tentativas.");
+    expect(wait).not.toHaveBeenCalled();
+  });
+
   it("repassa outros erros sem tentar de novo", async () => {
     const post = vi.fn().mockRejectedValue(new ApiError("Chave recusada.", 502));
     await expect(analyzeInParts("csv", { post, wait: async () => {}, onProgress: () => {} })).rejects.toThrow("Chave recusada.");

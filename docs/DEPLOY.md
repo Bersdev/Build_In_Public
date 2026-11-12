@@ -45,6 +45,18 @@ Fluxo: o front envia o CSV para `POST /api/v1/imports/analyze` em partes (`start
 
 Ao gravar variáveis pelo PowerShell, use o Bash ou o painel: o PowerShell 5.1 coloca um caractere invisível (BOM) no início do valor.
 
+## Limite de tentativas
+
+| Ação | Limite | Janela |
+|---|---|---|
+| Login com erro, por e-mail | 5 | 15 min |
+| Login com erro, por IP | 30 | 15 min |
+| Cadastro, por IP | 20 | 1 h |
+| Recuperação de senha, por IP | 10 | 1 h |
+| Análise com IA, por usuário | 120 | 1 h |
+
+O IP vem de `x-forwarded-for`, que a Vercel preenche com o endereço real. Em outra hospedagem, confira se o proxy não aceita esse cabeçalho vindo do cliente.
+
 ## Publicar de novo
 
 O projeto está ligado ao repositório `Bersdev/Build_In_Public`. Cada push na `main` publica em produção; push em outra branch gera uma versão de prévia com endereço próprio.

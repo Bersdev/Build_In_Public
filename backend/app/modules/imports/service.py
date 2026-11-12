@@ -14,7 +14,7 @@ dos registros reais: nada entra como concluído.
 from pydantic import BaseModel, TypeAdapter, ValidationError
 from sqlalchemy.orm import Session
 
-from app.core import groq
+from app.core import groq, rate_limit
 from app.core.dates import local_today, reject_inverted_dates
 from app.core.enums import GoalKind, ProjectStatus, TaskStatus
 from app.core.errors import AppError, ValidationFailed
@@ -35,6 +35,11 @@ from app.modules.tasks.models import Task
 CHUNK_CHAR_BUDGET = 6_000
 CHUNK_MAX_ROWS = 60
 CELL_PREVIEW = 100
+
+# Cada parte analisada gasta a cota da chave da Groq, que é de quem hospeda o app.
+# 120 por hora dá para uns quatro arquivos grandes (até 30 partes cada).
+ANALYZE_LIMIT = 120
+ANALYZE_WINDOW = 3600
 
 _url = TypeAdapter(WebUrl)
 
@@ -259,6 +264,15 @@ def build_fragment(raw: dict, chunk: list, columns: schemas.Columns, stage: str 
 
 
 # ---------- análise ----------
+
+
+def charge_analysis(db: Session, user: User) -> None:
+    """Conta uma chamada à IA no limite do usuário. Sem chave configurada, nada é gasto."""
+    if not groq.is_configured():
+        return
+    key = f"analyze:user:{user.id}"
+    rate_limit.ensure_allowed(db, key, ANALYZE_LIMIT, ANALYZE_WINDOW)
+    rate_limit.record(db, key)
 
 
 def analyze(user: User, data: schemas.AnalyzeRequest) -> dict:
