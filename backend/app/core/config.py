@@ -44,3 +44,13 @@ def normalize_database_url(url: str) -> str:
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
+
+
+def assert_safe_for_production(settings: Settings, on_vercel: bool) -> None:
+    """Na Vercel, recusa subir com a configuração de desenvolvimento.
+
+    Sem ENVIRONMENT=production o cookie de sessão sairia sem Secure e as migrações não rodariam.
+    Falhar na largada é melhor do que rodar aberto sem ninguém perceber.
+    """
+    if on_vercel and (settings.environment != "production" or not settings.cookie_secure):
+        raise RuntimeError("Configuração insegura: na Vercel, defina ENVIRONMENT=production e COOKIE_SECURE=true.")

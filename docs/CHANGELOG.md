@@ -1,5 +1,19 @@
 # Alterações
 
+## 2026-11-12 (revisão de segurança)
+
+### Adicionado
+
+- Verificação de `Origin` contra CSRF, `Cache-Control: no-store` nas respostas da API e Content-Security-Policy, `Permissions-Policy` e `Cross-Origin-Opener-Policy` no `vercel.json`.
+- Limite de erros na confirmação de senha (trocar senha e apagar conta) e teto de 600 escritas por hora por pessoa.
+- Na Vercel, a API recusa subir sem `ENVIRONMENT=production` e `COOKIE_SECURE=true`.
+- Varredura de testes de acesso entre contas (`tests/test_security.py`): toda rota com ID na URL, referências cruzadas, entradas hostis e erros internos.
+- `SECURITY.md` e `.github/dependabot.yml`.
+
+### Corrigido
+
+- Listas de nomes (tecnologias, tags, categorias, interesses) não tinham tamanho máximo; agora têm 30.
+
 ## 2026-11-11 (limite de tentativas)
 
 ### Adicionado

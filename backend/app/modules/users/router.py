@@ -30,7 +30,7 @@ def update_profile(data: schemas.UserUpdate, db: Db, user: CurrentUser):
 
 @router.delete("", status_code=status.HTTP_204_NO_CONTENT)
 def delete_account(data: schemas.DeleteAccountRequest, db: Db, user: CurrentUser, response: Response):
-    if not auth_service.verify_password(user.password_hash, data.password):
+    if not auth_service.confirm_password(db, user, data.password):
         raise ValidationFailed("Senha incorreta.")
     db.delete(user)
     db.commit()

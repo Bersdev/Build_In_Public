@@ -60,6 +60,18 @@ As tentativas são gravadas antes de a senha ser verificada, para requisições 
 
 O IP vem de `x-forwarded-for`, que a Vercel preenche com o endereço real. Endereços IPv6 são agrupados pelo bloco /64. Em outra hospedagem, confira se o proxy não aceita esse cabeçalho vindo do cliente.
 
+## Segurança
+
+- **Cabeçalhos** (`vercel.json`): Content-Security-Policy (só recursos do próprio site; imagens também de `https:`), `Permissions-Policy`, `Cross-Origin-Opener-Policy`, além de HSTS, `X-Frame-Options` e `nosniff` da Vercel. Se um dia o app carregar fontes ou scripts de outro domínio, a CSP precisa liberá-lo.
+- **CSRF:** a API recusa (403) `POST`, `PUT`, `PATCH` e `DELETE` cujo `Origin` não seja o próprio app. Sem `Origin` (curl, testes) passa.
+- **Cache:** toda resposta da API sai com `Cache-Control: no-store`.
+- **Confirmação de senha** (trocar senha, apagar conta): 5 erros em 15 min bloqueiam novas tentativas, para quem roubar uma sessão não descobrir a senha.
+- **Teto de escritas:** 600 por hora por pessoa (fora login e cadastro).
+- **Listas de nomes** (tecnologias, tags, categorias, interesses): no máximo 30 por registro.
+- **Produção segura:** na Vercel, a API não sobe sem `ENVIRONMENT=production` e `COOKIE_SECURE=true`.
+- **Prévias** compartilham o banco da produção e ficam protegidas pelo login da Vercel. Não compartilhe o endereço de uma prévia.
+- No GitHub, vale ligar *Secret scanning*, *Push protection* e o aviso de vulnerabilidades (Settings → Code security).
+
 ## Publicar de novo
 
 O projeto está ligado ao repositório `Bersdev/Build_In_Public`. Cada push na `main` publica em produção; push em outra branch gera uma versão de prévia com endereço próprio.

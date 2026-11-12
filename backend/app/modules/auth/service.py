@@ -109,6 +109,22 @@ def throttle(db: Session, name: str, ip: str, limit: int, window_seconds: int) -
     rate_limit.hit(db, f"{name}:ip:{ip}", limit, window_seconds)
 
 
+PASSWORD_CHECK_FAILURES = 5
+
+
+def confirm_password(db: Session, user: User, password: str) -> bool:
+    """Confere a senha atual em ações sensíveis (trocar senha, apagar conta), com limite de erros.
+
+    Quem roubou uma sessão não pode descobrir a senha chutando nesses campos.
+    """
+    key = f"password-check:user:{user.id}"
+    rate_limit.hit(db, key, PASSWORD_CHECK_FAILURES, LOGIN_WINDOW)
+    if verify_password(user.password_hash, password):
+        rate_limit.reset(db, key)
+        return True
+    return False
+
+
 def user_from_token(db: Session, token: str | None) -> User | None:
     if not token:
         return None
@@ -170,7 +186,7 @@ def reset_password(db: Session, token: str, new_password: str) -> None:
 
 
 def change_password(db: Session, user: User, current: str, new: str, current_token: str | None) -> None:
-    if not verify_password(user.password_hash, current):
+    if not confirm_password(db, user, current):
         raise ValidationFailed("A senha atual está incorreta.")
     user.password_hash = hash_password(new)
     # Encerra as sessões dos outros aparelhos: se alguém roubou uma sessão, ela deixa de valer.

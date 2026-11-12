@@ -1,0 +1,11 @@
+# Abre pull requests quando uma dependência tem versão nova ou correção de segurança.
+version: 2
+updates:
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "npm"
+    directory: "/frontend"
+    schedule:
+      interval: "weekly"

@@ -23,7 +23,8 @@ LongText = Annotated[str, Field(max_length=20_000)]
 ShortText = Annotated[str, Field(max_length=100)]
 WebUrl = Annotated[str, Field(max_length=500), AfterValidator(_validate_web_url)]
 Minutes = Annotated[int, Field(ge=1, le=1440)]
-NameList = Annotated[list[Annotated[str, Field(min_length=1, max_length=60)]], BeforeValidator(_names)]
+# No máximo 30 nomes por registro: cada nome novo vira uma linha no catálogo da pessoa.
+NameList = Annotated[list[Annotated[str, Field(min_length=1, max_length=60)]], Field(max_length=30), BeforeValidator(_names)]
 
 
 class Schema(BaseModel):
