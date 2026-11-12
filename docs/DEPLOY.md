@@ -58,7 +58,7 @@ Ao gravar variáveis pelo PowerShell, use o Bash ou o painel: o PowerShell 5.1 c
 
 As tentativas são gravadas antes de a senha ser verificada, para requisições paralelas não furarem o limite. O limite por e-mail + IP faz com que um estranho não consiga trancar a conta de outra pessoa: só o IP dele é bloqueado.
 
-O IP vem de `x-forwarded-for`, que a Vercel preenche com o endereço real. Em outra hospedagem, confira se o proxy não aceita esse cabeçalho vindo do cliente.
+O IP vem de `x-forwarded-for`, que a Vercel preenche com o endereço real. Endereços IPv6 são agrupados pelo bloco /64. Em outra hospedagem, confira se o proxy não aceita esse cabeçalho vindo do cliente.
 
 ## Publicar de novo
 

@@ -85,6 +85,19 @@ def test_release_desfaz_so_aquela_tentativa(db):
     assert db.query(rate_limit.RateLimitEvent).count() == 1
 
 
+def test_ipv6_e_agrupado_pelo_bloco_64():
+    assert rate_limit.normalize_ip("2001:db8:1:2::1") == rate_limit.normalize_ip("2001:db8:1:2:ffff:0:0:9")
+    assert rate_limit.normalize_ip("2001:db8:1:2::1") != rate_limit.normalize_ip("2001:db8:1:3::1")
+    assert rate_limit.normalize_ip("203.0.113.7") == "203.0.113.7"
+    assert rate_limit.normalize_ip("não-é-ip") == "não-é-ip"
+
+
+def test_trocar_de_endereco_dentro_do_mesmo_bloco_ipv6_nao_burla_o_limite(anonymous, conta):
+    for final in range(5):
+        assert _tentar_login(anonymous, conta, ip=f"2001:db8:1:2::{final + 1}").status_code == 401
+    assert _tentar_login(anonymous, conta, ip="2001:db8:1:2:abcd::1").status_code == 429
+
+
 # ---------- login ----------
 
 

@@ -7,6 +7,7 @@ e IPs em texto puro.
 """
 
 import hashlib
+import ipaddress
 import math
 from datetime import datetime, timedelta
 
@@ -38,11 +39,22 @@ def hash_key(key: str) -> str:
     return hashlib.sha256(key.encode()).hexdigest()
 
 
+def normalize_ip(ip: str) -> str:
+    """IPv6 é agrupado pelo bloco /64: quem tem um bloco troca de endereço à vontade dentro dele."""
+    try:
+        address = ipaddress.ip_address(ip)
+    except ValueError:
+        return ip
+    if address.version == 6:
+        return str(ipaddress.ip_network(f"{address}/64", strict=False))
+    return str(address)
+
+
 def client_ip(request: Request) -> str:
     # Na Vercel, x-forwarded-for traz o IP real de quem chamou (ela descarta o valor enviado pelo cliente).
     forwarded = request.headers.get("x-forwarded-for", "")
     first = forwarded.split(",")[0].strip()
-    return first or (request.client.host if request.client else "desconhecido")
+    return normalize_ip(first or (request.client.host if request.client else "desconhecido"))
 
 
 def _prune(db: Session) -> None:
