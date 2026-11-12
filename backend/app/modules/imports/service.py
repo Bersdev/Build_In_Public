@@ -270,9 +270,7 @@ def charge_analysis(db: Session, user: User) -> None:
     """Conta uma chamada à IA no limite do usuário. Sem chave configurada, nada é gasto."""
     if not groq.is_configured():
         return
-    key = f"analyze:user:{user.id}"
-    rate_limit.ensure_allowed(db, key, ANALYZE_LIMIT, ANALYZE_WINDOW)
-    rate_limit.record(db, key)
+    rate_limit.hit(db, f"analyze:user:{user.id}", ANALYZE_LIMIT, ANALYZE_WINDOW)
 
 
 def analyze(user: User, data: schemas.AnalyzeRequest) -> dict:

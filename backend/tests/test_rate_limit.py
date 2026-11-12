@@ -70,6 +70,21 @@ def test_reset_apaga_so_a_chave_pedida(db):
         rate_limit.ensure_allowed(db, "b", limit=1, window_seconds=60)
 
 
+def test_hit_grava_antes_de_contar_e_nao_deixa_a_tentativa_barrada(db):
+    for _ in range(3):
+        rate_limit.hit(db, "k", limit=3, window_seconds=60)
+    with pytest.raises(rate_limit.TooManyRequests):
+        rate_limit.hit(db, "k", limit=3, window_seconds=60)
+    assert db.query(rate_limit.RateLimitEvent).count() == 3
+
+
+def test_release_desfaz_so_aquela_tentativa(db):
+    primeira = rate_limit.hit(db, "k", limit=2, window_seconds=60)
+    rate_limit.hit(db, "k", limit=2, window_seconds=60)
+    rate_limit.release(db, primeira)
+    assert db.query(rate_limit.RateLimitEvent).count() == 1
+
+
 # ---------- login ----------
 
 
@@ -112,6 +127,35 @@ def test_email_em_maiusculas_conta_como_o_mesmo(anonymous, conta):
     for _ in range(5):
         _tentar_login(anonymous, "ANA@Exemplo.com")
     assert _tentar_login(anonymous, conta).status_code == 429
+
+
+def test_estranho_nao_tranca_a_conta_de_quem_usa_outro_ip(anonymous, conta):
+    for _ in range(5):
+        _tentar_login(anonymous, conta, ip="198.51.100.1")
+    assert _tentar_login(anonymous, conta, ip="198.51.100.1").status_code == 429
+    assert _tentar_login(anonymous, conta, senha=PASSWORD, ip="198.51.100.2").status_code == 200
+
+
+def test_ataque_de_varios_ips_ao_mesmo_email_tambem_e_barrado(anonymous, conta):
+    for ip in range(10):
+        for _ in range(5):
+            assert _tentar_login(anonymous, conta, ip=f"192.0.2.{ip}").status_code == 401
+    assert _tentar_login(anonymous, conta, senha=PASSWORD, ip="192.0.2.200").status_code == 429
+
+
+def test_tentativas_barradas_nao_prolongam_o_bloqueio(anonymous, conta, db):
+    for _ in range(5):
+        _tentar_login(anonymous, conta)
+    antes = db.query(rate_limit.RateLimitEvent).count()
+    for _ in range(4):
+        assert _tentar_login(anonymous, conta).status_code == 429
+    assert db.query(rate_limit.RateLimitEvent).count() == antes
+
+
+def test_login_certo_nao_conta_como_falha_para_o_ip(anonymous, conta, db):
+    antes = db.query(rate_limit.RateLimitEvent).count()  # o cadastro da fixture também conta
+    assert _tentar_login(anonymous, conta, senha=PASSWORD).status_code == 200
+    assert db.query(rate_limit.RateLimitEvent).count() == antes
 
 
 def test_login_bloqueia_um_ip_que_tenta_muitos_emails(anonymous):

@@ -5,7 +5,7 @@
 ### Adicionado
 
 - Limite de tentativas guardado no banco (tabela `rate_limit_events`, migração `0002`), porque a API roda em funções serverless e um contador em memória não funcionaria. As chaves ficam só como hash.
-- Login: 5 erros por e-mail e 30 por IP em 15 minutos bloqueiam novas tentativas (resposta 429 com `retry_after`), mesmo com a senha certa. Entrar com sucesso zera a contagem do e-mail.
+- Login: 5 erros por e-mail + IP, 30 por IP e 50 por e-mail (somando todos os IPs) em 15 minutos bloqueiam novas tentativas (resposta 429 com `retry_after`), mesmo com a senha certa. Entrar com sucesso zera a contagem do e-mail.
 - Cadastro: 20 por hora por IP. Recuperação de senha: 10 por hora por IP.
 - Análise com IA: 120 chamadas por hora por usuário, para ninguém esgotar a cota da chave da Groq. O front só espera sozinho pausas de até 2 minutos (as da Groq); acima disso mostra a mensagem.
 

@@ -49,11 +49,14 @@ Ao gravar variáveis pelo PowerShell, use o Bash ou o painel: o PowerShell 5.1 c
 
 | Ação | Limite | Janela |
 |---|---|---|
-| Login com erro, por e-mail | 5 | 15 min |
+| Login com erro, por e-mail + IP | 5 | 15 min |
 | Login com erro, por IP | 30 | 15 min |
+| Login com erro, por e-mail (todos os IPs) | 50 | 15 min |
 | Cadastro, por IP | 20 | 1 h |
 | Recuperação de senha, por IP | 10 | 1 h |
 | Análise com IA, por usuário | 120 | 1 h |
+
+As tentativas são gravadas antes de a senha ser verificada, para requisições paralelas não furarem o limite. O limite por e-mail + IP faz com que um estranho não consiga trancar a conta de outra pessoa: só o IP dele é bloqueado.
 
 O IP vem de `x-forwarded-for`, que a Vercel preenche com o endereço real. Em outra hospedagem, confira se o proxy não aceita esse cabeçalho vindo do cliente.
 

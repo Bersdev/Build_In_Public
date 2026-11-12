@@ -22,8 +22,9 @@ _DUMMY_HASH = _hasher.hash("senha-que-nunca-sera-usada")
 
 # Limites de tentativas (ver app/core/rate_limit.py).
 LOGIN_WINDOW = 900  # 15 minutos
-LOGIN_FAILURES_PER_EMAIL = 5
+LOGIN_FAILURES_PER_EMAIL_AND_IP = 5
 LOGIN_FAILURES_PER_IP = 30
+LOGIN_FAILURES_PER_EMAIL = 50
 HOUR = 3600
 REGISTER_PER_IP = 20
 FORGOT_PASSWORD_PER_IP = 10
@@ -75,26 +76,37 @@ def authenticate(db: Session, email: str, password: str) -> User:
 
 
 def login(db: Session, email: str, password: str, ip: str) -> User:
-    """Entra na conta, recusando quem erra a senha muitas vezes (por e-mail e por IP)."""
-    email_key = f"login:email:{email.lower()}"
-    ip_key = f"login:ip:{ip}"
-    rate_limit.ensure_allowed(db, email_key, LOGIN_FAILURES_PER_EMAIL, LOGIN_WINDOW)
-    rate_limit.ensure_allowed(db, ip_key, LOGIN_FAILURES_PER_IP, LOGIN_WINDOW)
+    """Entra na conta, recusando quem erra a senha muitas vezes.
+
+    Três limites, todos gravados ANTES de verificar a senha (ver rate_limit.hit):
+    - e-mail + IP: 5 erros. Quem erra do próprio aparelho não tranca a conta de ninguém.
+    - IP: 30 erros, para quem testa muitos e-mails.
+    - e-mail: 50 erros somando todos os IPs, contra ataque distribuído. Um IP sozinho nunca chega
+      a ele (o limite de IP é 30), então um estranho não consegue trancar a conta de outra pessoa.
+    Login certo desfaz as tentativas desta chamada e zera a contagem de e-mail + IP.
+    """
+    email = email.lower()
+    email_ip_key = f"login:email-ip:{email}|{ip}"
+    taken: list[int] = []
     try:
-        user = authenticate(db, email, password)
-    except UnauthorizedError:
-        rate_limit.record(db, email_key)
-        rate_limit.record(db, ip_key)
+        taken.append(rate_limit.hit(db, f"login:ip:{ip}", LOGIN_FAILURES_PER_IP, LOGIN_WINDOW))
+        taken.append(rate_limit.hit(db, email_ip_key, LOGIN_FAILURES_PER_EMAIL_AND_IP, LOGIN_WINDOW))
+        taken.append(rate_limit.hit(db, f"login:email:{email}", LOGIN_FAILURES_PER_EMAIL, LOGIN_WINDOW))
+    except rate_limit.TooManyRequests:
+        # A tentativa barrada não conta nos limites que ainda deixaram passar.
+        for event_id in taken:
+            rate_limit.release(db, event_id)
         raise
-    rate_limit.reset(db, email_key)
+    user = authenticate(db, email, password)  # erro de senha: a tentativa já está gravada
+    for event_id in taken:
+        rate_limit.release(db, event_id)
+    rate_limit.reset(db, email_ip_key)
     return user
 
 
 def throttle(db: Session, name: str, ip: str, limit: int, window_seconds: int) -> None:
     """Conta uma tentativa de `name` (cadastro, recuperação) vinda deste IP."""
-    key = f"{name}:ip:{ip}"
-    rate_limit.ensure_allowed(db, key, limit, window_seconds)
-    rate_limit.record(db, key)
+    rate_limit.hit(db, f"{name}:ip:{ip}", limit, window_seconds)
 
 
 def user_from_token(db: Session, token: str | None) -> User | None:
