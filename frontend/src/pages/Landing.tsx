@@ -41,7 +41,7 @@ function Navbar() {
   return (
     <header className="sticky top-0 z-30 border-b border-line/70 bg-canvas/80 backdrop-blur-md">
       <div className="mx-auto flex h-14 max-w-[1200px] items-center justify-between px-4 sm:px-6">
-        <Link to="/" aria-label="Build in Public, início">
+        <Link to="/" aria-label="DevTrack, início">
           <Logo />
         </Link>
         <nav aria-label="Seções" className="hidden items-center gap-1 md:flex">
@@ -108,7 +108,7 @@ function ProductPreview() {
   const days = ["S", "T", "Q", "Q", "S", "S", "D"];
   const max = Math.max(...week);
   return (
-    <div className="relative" aria-label="Exemplo do painel do Build in Public" role="img">
+    <div className="relative" aria-label="Exemplo do painel do DevTrack" role="img">
       <div className="absolute -inset-x-10 -top-10 bottom-0 bg-[radial-gradient(50%_60%_at_50%_0%,var(--glow),transparent)]" />
       <div className="relative overflow-hidden rounded-xl border border-line-strong bg-surface shadow-[0_40px_120px_-20px_rgb(0_0_0/0.7)]">
         <div className="flex items-center gap-1.5 border-b border-line px-4 py-2.5">
@@ -222,7 +222,7 @@ function Footer() {
       </div>
       <div className="overflow-hidden border-t border-line">
         <div className="mx-auto flex max-w-[1200px] flex-wrap items-end justify-between gap-4 px-4 pt-8 sm:px-6">
-          <p className="pb-6 text-[12px] text-faint">© {new Date().getFullYear()} Build in Public</p>
+          <p className="pb-6 text-[12px] text-faint">© {new Date().getFullYear()} DevTrack</p>
           <p
             aria-hidden="true"
             className="select-none bg-gradient-to-b from-line-strong to-transparent bg-clip-text font-serif text-[18vw] leading-[0.8] text-transparent md:text-[160px]"
@@ -292,7 +292,7 @@ export function LandingPage() {
             <SectionHeading
               eyebrow="02 · Como funciona"
               title="Três hábitos. Nenhum número inventado."
-              text="O Build in Public não pede que você preencha indicadores. Eles nascem dos registros que você já faria."
+              text="O DevTrack não pede que você preencha indicadores. Eles nascem dos registros que você já faria."
             />
             <ol className="space-y-3">
               {[

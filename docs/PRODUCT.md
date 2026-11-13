@@ -1,6 +1,6 @@
 # Especificação do produto
 
-Fonte de verdade do que o Build in Public deve ser. O estado de cada item fica em [ROADMAP.md](ROADMAP.md).
+Fonte de verdade do que o DevTrack deve ser. O estado de cada item fica em [ROADMAP.md](ROADMAP.md).
 
 ## Visão
 

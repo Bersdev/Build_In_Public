@@ -237,3 +237,35 @@ export function useAction<T = void>(action: (values: T) => Promise<unknown>, onD
     },
   });
 }
+
+/** Cartão com cabeçalho (ícone, título e ação), usado nas seções do dashboard. */
+export function Card({
+  title,
+  icon,
+  action,
+  className = "",
+  children,
+}: {
+  title: string;
+  icon?: ReactNode;
+  action?: ReactNode;
+  className?: string;
+  children: ReactNode;
+}) {
+  return (
+    <section className={`min-w-0 rounded-2xl border border-line bg-surface p-5 ${className}`}>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+        <h2 className="flex items-center gap-2.5 text-[15px] font-[600] tracking-[-0.01em]">
+          {icon && (
+            <span className="grid size-7 place-items-center rounded-lg bg-accent/12 text-accent-ink" aria-hidden="true">
+              {icon}
+            </span>
+          )}
+          {title}
+        </h2>
+        {action}
+      </div>
+      {children}
+    </section>
+  );
+}

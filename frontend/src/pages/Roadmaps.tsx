@@ -1,6 +1,7 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Download, Sparkles, Upload } from "lucide-react";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
+import { useSearchParams } from "react-router";
 import { Badge, Button, DeleteButton, Empty, ErrorNote, Loaded, Modal, PageHeader, Progress, SelectField, TextArea, TextField, useAction } from "../components/ui";
 import { analyzeInParts, type AnalyzeResponse, type Progress as AnalysisState } from "../lib/analyze";
 import { api } from "../lib/api";
@@ -331,10 +332,19 @@ function PathDetail({ pathId, onEdit }: { pathId: number; onEdit: (path: Learnin
 }
 
 export function RoadmapsPage() {
+  const [params] = useSearchParams();
   const [editing, setEditing] = useState<LearningPath | "new" | null>(null);
-  const [opened, setOpened] = useState<number | null>(null);
+  // "/roadmaps?trilha=3" (vindo do dashboard ou da busca) já abre essa trilha.
+  const [opened, setOpened] = useState<number | null>(Number(params.get("trilha")) || null);
+  const fromUrl = Number(params.get("trilha")) || null;
   const [importing, setImporting] = useState(false);
   const query = useQuery({ queryKey: ["paths"], queryFn: () => api.get<LearningPath[]>("/learning-paths") });
+  const listed = Boolean(query.data);
+  useEffect(() => {
+    if (!fromUrl || !listed) return;
+    setOpened(fromUrl);
+    document.getElementById(`trilha-${fromUrl}`)?.scrollIntoView({ block: "start" });
+  }, [fromUrl, listed]);
   return (
     <>
       <PageHeader
@@ -368,7 +378,7 @@ export function RoadmapsPage() {
           ) : (
             <ul className="divide-y divide-line border-y border-line">
               {paths.map((path) => (
-                <li key={path.id} className="py-4">
+                <li key={path.id} className="scroll-mt-24 py-4" id={`trilha-${path.id}`}>
                   <div className="flex flex-wrap items-baseline justify-between gap-2">
                     <h2 className="font-serif text-xl">
                       <button type="button" aria-expanded={opened === path.id} onClick={() => setOpened(opened === path.id ? null : path.id)} className="text-left hover:text-accent-ink">

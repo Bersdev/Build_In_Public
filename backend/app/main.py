@@ -20,7 +20,7 @@ from app.modules.study_sessions.router import router as study_sessions_router
 from app.modules.tasks.router import router as tasks_router
 from app.modules.users.router import router as users_router
 
-app = FastAPI(title="Build in Public API")
+app = FastAPI(title="DevTrack API")
 register_error_handlers(app)
 
 UNSAFE_METHODS = {"POST", "PUT", "PATCH", "DELETE"}

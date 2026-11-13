@@ -1,5 +1,5 @@
 {
-  "name": "build-in-public-frontend",
+  "name": "devtrack-frontend",
   "private": true,
   "version": "0.1.0",
   "type": "module",

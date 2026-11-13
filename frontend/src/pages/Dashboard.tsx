@@ -1,13 +1,35 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQueries, useQuery } from "@tanstack/react-query";
+import { Activity as ActivityIcon, Cpu } from "lucide-react";
 import { useState } from "react";
-import { Link } from "react-router";
-import { BarChart, type BarPoint } from "../components/BarChart";
-import { Button, Empty, Loaded, Modal, Progress, SectionTitle } from "../components/ui";
-import { api } from "../lib/api";
-import { formatDate, formatDateTime, formatHours, formatMinutes, formatMonth, formatShortDate } from "../lib/format";
-import type { Dashboard as DashboardData, MonthlyPoint, Technology, WeeklyPoint } from "../lib/types";
+import { type BarPoint } from "../components/BarChart";
+import { Card, Empty, Loaded, Modal } from "../components/ui";
+import { api, queryString } from "../lib/api";
+import { useMe } from "../lib/auth";
+import { dueLabel, nextContent, overallProgress, pickCurrentPath } from "../lib/dashboard";
+import { formatDateTime, formatMinutes, formatMonth, formatShortDate, toIsoDate, today } from "../lib/format";
+import type {
+  Dashboard as DashboardData,
+  Gamification,
+  Goal,
+  LearningPath,
+  LearningPathDetail,
+  MonthlyPoint,
+  Project,
+  StudySession,
+  Task,
+  Technology,
+  WeeklyPoint,
+} from "../lib/types";
+import { EvolutionCard } from "./dashboard/EvolutionCard";
+import { GoalsCard } from "./dashboard/GoalsCard";
+import { ProjectsCard } from "./dashboard/ProjectsCard";
+import { RoadmapCard } from "./dashboard/RoadmapCard";
+import { Stats, type StatsData } from "./dashboard/Stats";
+import { TasksCard } from "./dashboard/TasksCard";
+import { TodayBanner } from "./dashboard/TodayBanner";
 import { SessionForm } from "./Studies";
 
+// Usados também pela página Metas e evolução.
 export function weeklyPoints(series: WeeklyPoint[]): BarPoint[] {
   return series.map((point) => ({ key: point.week_start, label: formatShortDate(point.week_start), minutes: point.minutes }));
 }
@@ -27,13 +49,13 @@ export function Indicator({ label, value }: { label: string; value: string | num
 
 function TechnologyBars({ technologies }: { technologies: Technology[] }) {
   if (technologies.length === 0) return <Empty>As tecnologias aparecem aqui quando você registrar estudos.</Empty>;
-  const top = technologies.slice(0, 8);
+  const top = technologies.slice(0, 6);
   const max = Math.max(...top.map((tech) => tech.study_minutes), 1);
   return (
-    <ul className="space-y-2.5">
+    <ul className="space-y-3">
       {top.map((tech) => (
         <li key={tech.id}>
-          <div className="flex justify-between gap-3 text-sm">
+          <div className="flex justify-between gap-3 text-[13px]">
             <span className="truncate">{tech.name}</span>
             <span className="shrink-0 text-muted">{formatMinutes(tech.study_minutes)}</span>
           </div>
@@ -46,144 +68,112 @@ function TechnologyBars({ technologies }: { technologies: Technology[] }) {
   );
 }
 
-function Hero({ data, onRegister }: { data: DashboardData; onRegister: () => void }) {
-  const dailyPoints = data.daily_minutes.map((point) => ({
-    key: point.date,
-    label: formatShortDate(point.date),
-    minutes: point.minutes,
-  }));
-  const details = [
-    data.current_streak === 1 ? "1 dia seguido de estudo" : `${data.current_streak} dias seguidos de estudo`,
-    `nível ${data.level}`,
-    `${data.xp} XP`,
-  ].join(", ");
-  return (
-    <section className="mb-10">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="max-w-[24ch] font-serif text-[32px] leading-[1.1] sm:text-[40px]">
-            {data.week_minutes > 0
-              ? `Nesta semana você estudou ${formatMinutes(data.week_minutes)}.`
-              : "Nenhum estudo registrado nesta semana."}
-          </h1>
-          <p className="mt-2 text-muted">{details}.</p>
-        </div>
-        <Button variant="primary" onClick={onRegister}>
-          Registrar estudo
-        </Button>
-      </div>
-      <div className="mt-6">
-        <h2 className="mb-1 text-sm text-muted">Tempo de estudo nos últimos 30 dias</h2>
-        <BarChart title="Tempo de estudo por dia, últimos 30 dias" points={dailyPoints} height={120} tickEvery={7} />
-      </div>
-    </section>
-  );
+/** Trilhas com o detalhe (etapas e conteúdos) de cada uma, de onde sai o próximo conteúdo. */
+function useLearningPaths() {
+  const list = useQuery({ queryKey: ["paths"], queryFn: () => api.get<LearningPath[]>("/learning-paths") });
+  const details = useQueries({
+    queries: (list.data ?? []).map((path) => ({
+      queryKey: ["paths", path.id],
+      queryFn: () => api.get<LearningPathDetail>(`/learning-paths/${path.id}`),
+    })),
+  });
+  const loading = list.isPending || details.some((detail) => detail.isPending);
+  const paths = details.flatMap((detail) => (detail.data ? [detail.data] : []));
+  return { list: list.data ?? [], paths, loading };
+}
+
+function ninetyDaysAgo(): string {
+  const date = new Date();
+  date.setDate(date.getDate() - 89);
+  return toIsoDate(date);
+}
+
+function featuredGoal(goals: Goal[]): StatsData["featuredGoal"] {
+  const open = goals.filter((goal) => !goal.is_reached);
+  if (open.length === 0) return null;
+  const goal = [...open].sort((a, b) => {
+    if (a.due_date && b.due_date) return a.due_date.localeCompare(b.due_date);
+    if (a.due_date || b.due_date) return a.due_date ? -1 : 1;
+    return b.progress_percent - a.progress_percent;
+  })[0];
+  return { title: goal.title, percent: goal.progress_percent };
 }
 
 function Content({ data }: { data: DashboardData }) {
   const [registering, setRegistering] = useState(false);
-  const [range, setRange] = useState<"weekly" | "monthly">("weekly");
+  const [chosenPath, setChosenPath] = useState<number | null>(null);
+  const { data: user } = useMe();
+  const learning = useLearningPaths();
+  const tasks = useQuery({ queryKey: ["tasks", "all"], queryFn: () => api.get<Task[]>("/tasks?view=all") });
+  const projects = useQuery({ queryKey: ["projects"], queryFn: () => api.get<Project[]>("/projects") });
+  const goals = useQuery({ queryKey: ["goals"], queryFn: () => api.get<Goal[]>("/goals") });
+  const gamification = useQuery({ queryKey: ["gamification"], queryFn: () => api.get<Gamification>("/gamification") });
+  const from = ninetyDaysAgo();
+  const sessions = useQuery({
+    queryKey: ["study-sessions", "since", from],
+    queryFn: () => api.get<StudySession[]>(`/study-sessions${queryString({ date_from: from, limit: 500 })}`),
+  });
+
+  const current = pickCurrentPath(learning.paths);
+  const next = current ? nextContent(current) : null;
+  const shownPath = learning.paths.find((path) => path.id === chosenPath) ?? current ?? learning.paths[0] ?? null;
+  const now = today();
+  const pendingTasks = (tasks.data ?? []).filter((task) => task.status !== "done");
+  const dueTones = pendingTasks.map((task) => dueLabel(task.due_date, now));
+
+  const stats: StatsData = {
+    progress: overallProgress(learning.list),
+    goalsInProgress: (goals.data ?? []).filter((goal) => !goal.is_reached).length,
+    featuredGoal: featuredGoal(goals.data ?? []),
+    tasksPending: data.tasks_pending,
+    tasksDueToday: dueTones.filter((due) => due?.text === "Hoje").length,
+    tasksOverdue: dueTones.filter((due) => due?.tone === "danger").length,
+    projectsActive: data.projects_in_progress,
+    projectsCompleted: data.projects_completed,
+    streak: data.current_streak,
+    longestStreak: gamification.data?.longest_streak ?? null,
+  };
+
   return (
-    <>
-      <Hero data={data} onRegister={() => setRegistering(true)} />
+    <div className="space-y-5">
+      <TodayBanner
+        firstName={user?.name.split(/\s+/)[0] ?? ""}
+        next={next}
+        hasPaths={learning.list.length > 0}
+        loading={learning.loading}
+        onRegister={() => setRegistering(true)}
+      />
       {registering && (
         <Modal title="Registrar estudo" onClose={() => setRegistering(false)}>
           <SessionForm onDone={() => setRegistering(false)} />
         </Modal>
       )}
 
-      <dl className="mb-10 grid grid-cols-2 gap-x-4 gap-y-5 sm:grid-cols-3 lg:grid-cols-5">
-        <Indicator label="Horas estudadas" value={formatHours(Math.round((data.total_minutes / 60) * 10) / 10)} />
-        <Indicator label="Dias com estudos" value={data.study_days} />
-        <Indicator label="Projetos em andamento" value={data.projects_in_progress} />
-        <Indicator label="Projetos concluídos" value={data.projects_completed} />
-        <Indicator label="Tarefas pendentes" value={data.tasks_pending} />
-      </dl>
+      <Stats data={stats} />
 
-      <div className="mb-10 grid gap-8 lg:grid-cols-[3fr_2fr]">
-        <section>
-          <SectionTitle
-            action={
-              <div role="group" aria-label="Período do gráfico" className="flex gap-1">
-                <Button aria-pressed={range === "weekly"} className={range === "weekly" ? "bg-raised" : ""} onClick={() => setRange("weekly")}>
-                  Semanal
-                </Button>
-                <Button aria-pressed={range === "monthly"} className={range === "monthly" ? "bg-raised" : ""} onClick={() => setRange("monthly")}>
-                  Mensal
-                </Button>
-              </div>
-            }
-          >
-            Evolução
-          </SectionTitle>
-          {range === "weekly" ? (
-            <BarChart title="Tempo de estudo por semana, últimas 12 semanas" points={weeklyPoints(data.weekly_minutes)} tickEvery={3} />
-          ) : (
-            <BarChart title="Tempo de estudo por mês, últimos 12 meses" points={monthlyPoints(data.monthly_minutes)} tickEvery={2} />
-          )}
-        </section>
-        <section>
-          <SectionTitle>Tecnologias estudadas</SectionTitle>
-          <TechnologyBars technologies={data.technologies} />
-        </section>
+      <div className="grid gap-5 xl:grid-cols-12">
+        <RoadmapCard paths={learning.paths} selected={shownPath} onSelect={setChosenPath} loading={learning.loading} />
+        <TasksCard tasks={tasks.data} loading={tasks.isPending} />
       </div>
 
-      <div className="grid gap-8 lg:grid-cols-3">
-        <section>
-          <SectionTitle
-            action={
-              <Link to="/metas" className="text-sm text-muted underline">
-                Ver todas
-              </Link>
-            }
-          >
-            Metas atuais
-          </SectionTitle>
-          {data.current_goals.length === 0 ? (
-            <Empty action={<Link to="/metas" className="text-accent-ink underline">Criar meta</Link>}>Nenhuma meta em andamento.</Empty>
-          ) : (
-            <ul className="space-y-4">
-              {data.current_goals.map((goal) => (
-                <li key={goal.id}>
-                  <div className="mb-1 flex justify-between gap-3 text-sm">
-                    <span>{goal.title}</span>
-                    <span className="shrink-0 text-muted">{goal.progress_percent}%</span>
-                  </div>
-                  <Progress value={goal.progress_percent} label={`Progresso de ${goal.title}`} />
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
+      <div className="grid gap-5 md:grid-cols-2 min-[1360px]:grid-cols-12">
+        <EvolutionCard paths={learning.paths} sessions={sessions.data} loading={learning.loading || sessions.isPending} />
+        <ProjectsCard projects={projects.data} loading={projects.isPending} />
+        <GoalsCard goals={goals.data} loading={goals.isPending} />
+      </div>
 
-        <section>
-          <SectionTitle>Últimos aprendizados</SectionTitle>
-          {data.recent_learnings.length === 0 ? (
-            <Empty action={<Link to="/diario" className="text-accent-ink underline">Abrir o Diário</Link>}>
-              Registre no Diário o que você aprendeu.
-            </Empty>
-          ) : (
-            <ul className="space-y-4">
-              {data.recent_learnings.map((entry) => (
-                <li key={entry.id}>
-                  <p className="line-clamp-3 font-serif text-[1.0625rem] leading-snug">{entry.key_learnings}</p>
-                  <p className="mt-0.5 text-xs text-faint">
-                    {entry.title}, {formatDate(entry.entry_date)}
-                  </p>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-
-        <section>
-          <SectionTitle>Linha do tempo</SectionTitle>
+      <div className="grid gap-5 md:grid-cols-2">
+        <Card title="Tecnologias estudadas" icon={<Cpu size={15} />}>
+          <TechnologyBars technologies={data.technologies} />
+        </Card>
+        <Card title="Atividade recente" icon={<ActivityIcon size={15} />}>
           {data.recent_activity.length === 0 ? (
             <Empty>Suas atividades aparecem aqui conforme você usa a plataforma.</Empty>
           ) : (
-            <ol className="space-y-3 border-l border-line pl-3">
-              {data.recent_activity.map((activity) => (
-                <li key={activity.id} className="text-sm">
+            <ol className="space-y-3 border-l border-line pl-4">
+              {data.recent_activity.slice(0, 6).map((activity) => (
+                <li key={activity.id} className="relative text-[13px]">
+                  <span className="absolute -left-[21px] top-1.5 size-2 rounded-full bg-accent" aria-hidden="true" />
                   <p className="wrap-anywhere">{activity.title}</p>
                   <time className="text-xs text-faint" dateTime={activity.occurred_at}>
                     {formatDateTime(activity.occurred_at)}
@@ -192,9 +182,9 @@ function Content({ data }: { data: DashboardData }) {
               ))}
             </ol>
           )}
-        </section>
+        </Card>
       </div>
-    </>
+    </div>
   );
 }
 

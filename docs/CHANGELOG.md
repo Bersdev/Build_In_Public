@@ -1,5 +1,21 @@
 # Alterações
 
+## 2026-11-13 (DevTrack e novo dashboard)
+
+### Alterado
+
+- O produto passa a se chamar **DevTrack** ("Estude. Evolua. Conquiste."). Nova logo `</>` sobre o verde-limão da marca, também no favicon. A paleta não mudou. O repositório e o endereço da Vercel continuam com o nome antigo.
+- Dashboard redesenhado como centro de controle, inspirado na referência enviada e adaptado à identidade atual: banner "Hoje é dia de aprender" com o próximo conteúdo do roadmap, cinco indicadores, cartão do roadmap com etapas concluídas, em andamento e bloqueadas, tarefas com conclusão direto no painel, projetos, anel de metas e gráfico de evolução (progresso ou tempo de estudo, 7/30/90 dias). Tecnologias e atividade recente continuam no fim da página.
+- Menu lateral novo (item ativo em destaque, cartão de nível com XP real, menu da conta) e barra superior com busca e troca de tema. No celular, o menu abre como painel sobre a tela.
+
+### Adicionado
+
+- `lib/dashboard.ts`: próximo conteúdo (primeiro pendente na ordem das etapas, na trilha estudada mais recentemente), estado das etapas, progresso acumulado e minutos por dia, todos calculados dos dados reais e com testes.
+- Busca nos dados da pessoa (`components/Search.tsx`) e gráficos de linha e anel (`components/Charts.tsx`).
+- `/roadmaps?trilha=ID` abre direto a trilha indicada.
+
+Nenhuma rota do backend mudou.
+
 ## 2026-11-12 (revisão de segurança)
 
 ### Adicionado

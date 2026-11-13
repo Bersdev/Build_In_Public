@@ -1,4 +1,6 @@
-# Build in Public: instruções para o Claude Code
+# DevTrack: instruções para o Claude Code
+
+O produto se chamava Build in Public; desde 2026-11-13 o nome é **DevTrack**. O repositório e o endereço da Vercel continuam com o nome antigo.
 
 Responda em português do Brasil. A especificação completa está em `docs/PRODUCT.md`; o estado do trabalho, em `docs/ROADMAP.md`.
 

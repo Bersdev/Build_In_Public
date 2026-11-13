@@ -122,7 +122,7 @@ CLASSIFY_SCHEMA = _object(
     }
 )
 
-SYSTEM_PROMPT = """Você classifica as linhas de um CSV com um plano de estudos de programação, para o app Build in Public.
+SYSTEM_PROMPT = """Você classifica as linhas de um CSV com um plano de estudos de programação, para o app DevTrack.
 Cada linha começa com #número. Por padrão, TODA linha é um conteúdo de estudo da trilha. Liste só as exceções:
 
 - goals (metas): objetivos com um número a alcançar. kind:

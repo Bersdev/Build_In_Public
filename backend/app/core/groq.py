@@ -69,7 +69,7 @@ def complete_json(messages: list[dict], schema: dict) -> dict:
         headers={
             "Authorization": f"Bearer {settings.groq_api_key.strip()}",
             "Content-Type": "application/json",
-            "User-Agent": "build-in-public",
+            "User-Agent": "devtrack",
         },
         method="POST",
     )

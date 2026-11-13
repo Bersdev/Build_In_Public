@@ -1,6 +1,6 @@
-# Build in Public
+# DevTrack
 
-**Documente sua jornada. Acompanhe sua evolução. Construa seu futuro.**
+**Estude. Evolua. Conquiste.**
 
 Plataforma web para estudantes e desenvolvedores registrarem e visualizarem a evolução no aprendizado de programação, conectando aprendizado, execução e evolução.
 
@@ -9,7 +9,8 @@ Plataforma web para estudantes e desenvolvedores registrarem e visualizarem a ev
 ## Funcionalidades
 
 - **Conta:** cadastro, login com sessão em cookie seguro, perfil, troca de senha (encerra as outras sessões) e exclusão da conta.
-- **Dashboard:** resumo da semana, horas estudadas, sequência de dias e gráficos.
+- **Dashboard (centro de controle):** destaque "Hoje é dia de aprender" com o próximo conteúdo do roadmap (respeitando a ordem das etapas), indicadores gerais, etapas concluídas/em andamento/bloqueadas, tarefas para concluir ali mesmo, projetos, metas e gráfico de evolução de 7, 30 ou 90 dias.
+- **Busca e tema:** busca nos seus roadmaps, projetos, cursos, tarefas e metas; troca de tema claro/escuro no topo.
 - **Estudos:** sessões de estudo com duração, tecnologias e cursos.
 - **Diário:** registro do que foi aprendido, com busca e tags.
 - **Roadmaps:** trilhas com etapas e conteúdos, progresso calculado a partir do que foi concluído.
@@ -41,7 +42,7 @@ backend/
 frontend/src/
   components/            # componentes reutilizáveis
   lib/                   # API, tipos, formatação, CSV
-  pages/                 # telas
+  pages/                 # telas (pages/dashboard/ tem as seções do dashboard)
 api/index.py             # entrada da API na Vercel
 docs/                    # documentação do projeto
 exercicios/              # atividades de estudo
