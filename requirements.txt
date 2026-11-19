@@ -7,4 +7,4 @@ pydantic-settings==2.16.2
 argon2-cffi==25.1.0
 email-validator==2.3.0
 tzdata==2026.6
-psycopg[binary]==3.3.8
+psycopg[binary]==3.3.9
